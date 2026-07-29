@@ -1,0 +1,26 @@
+# Moi truong ao Python
+.venv/
+venv/
+env/
+
+# Tap tin bien moi truong bao mat
+.env
+
+# Bo nho dem va tap tin bien dich Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+
+# Thu muc luu tru kho vector da duoc tao
+data/processed/*
+!data/processed/.gitkeep
+
+# Tap tin cau hinh trinh soan thao va he dieu hanh
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

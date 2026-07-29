@@ -1,0 +1,18 @@
+# Embedding va Sentence Transformers (chay cuc bo)
+sentence-transformers>=3.0.0
+
+# SDK Google Gemini LLM
+google-genai>=1.0.0
+
+# Web Server va REST API
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+python-multipart>=0.0.9
+
+# Tien ich doc bien moi truong va tinh toan
+python-dotenv>=1.0.0
+numpy>=1.26.0
+pypdf>=4.0.0
+
+# Thuvien kiem thu tu dong
+pytest>=8.0.0
