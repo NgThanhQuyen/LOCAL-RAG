@@ -1,6 +1,6 @@
 /**
  * ChatNTQ RAG Client Script
- * Quản lý tương tác chat, hiển thị Markdown, tải lên file và trích dẫn nguồn.
+ * Quản lý tương tác chat, Lịch sử cuộc trò chuyện (Multi-turn), hiển thị Markdown & trích dẫn nguồn.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadZone = document.getElementById('upload-zone');
     const fileInput = document.getElementById('file-input');
     const reingestBtn = document.getElementById('reingest-btn');
+    const sessionList = document.getElementById('session-list');
+    const clearAllSessionsBtn = document.getElementById('clear-all-sessions-btn');
 
     // Status Elements
     const statusIndicator = document.getElementById('status-indicator');
@@ -35,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State
     let isGenerating = false;
+    let sessions = loadSessionsFromStorage();
+    let currentSessionId = getInitialSessionId();
 
     // Configure Marked.js Options
     if (window.marked) {
@@ -52,6 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Init ---
     checkHealth();
     loadDocuments();
+    renderSessionList();
+    loadActiveSessionToUI();
 
     // --- Input Auto Resize & Buttons State ---
     chatInput.addEventListener('input', () => {
@@ -97,18 +103,160 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebarBtn?.addEventListener('click', closeSidebar);
     sidebarOverlay?.addEventListener('click', closeSidebar);
 
-    // --- New Chat & Clear Chat ---
-    const resetChat = () => {
-        chatHistory.innerHTML = '';
-        chatHistory.appendChild(welcomeScreen);
-        welcomeScreen.style.display = 'flex';
-        chatInput.value = '';
-        chatInput.style.height = 'auto';
-        sendBtn.disabled = true;
-    };
+    // --- Sessions & History Management ---
+    function loadSessionsFromStorage() {
+        try {
+            const raw = localStorage.getItem('chat_sessions');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
 
-    newChatBtn.addEventListener('click', resetChat);
-    clearChatBtn.addEventListener('click', resetChat);
+    function saveSessionsToStorage() {
+        try {
+            localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+        } catch (e) {
+            console.error('Lỗi lưu phiên chat:', e);
+        }
+    }
+
+    function getInitialSessionId() {
+        if (sessions.length > 0) {
+            return sessions[0].id;
+        }
+        return createNewSessionObject().id;
+    }
+
+    function createNewSessionObject() {
+        const newSession = {
+            id: 'session_' + Date.now(),
+            title: 'Cuộc trò chuyện mới',
+            createdAt: Date.now(),
+            messages: []
+        };
+        sessions.unshift(newSession);
+        saveSessionsToStorage();
+        return newSession;
+    }
+
+    function createNewChat() {
+        const newSession = createNewSessionObject();
+        currentSessionId = newSession.id;
+        renderSessionList();
+        loadActiveSessionToUI();
+    }
+
+    newChatBtn.addEventListener('click', createNewChat);
+    clearChatBtn.addEventListener('click', () => {
+        const active = getCurrentSession();
+        if (active) {
+            active.messages = [];
+            saveSessionsToStorage();
+            loadActiveSessionToUI();
+        }
+    });
+
+    clearAllSessionsBtn?.addEventListener('click', () => {
+        if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử các cuộc trò chuyện?')) {
+            sessions = [];
+            saveSessionsToStorage();
+            createNewChat();
+        }
+    });
+
+    function getCurrentSession() {
+        return sessions.find(s => s.id === currentSessionId);
+    }
+
+    function renderSessionList() {
+        if (!sessionList) return;
+
+        if (sessions.length === 0) {
+            sessionList.innerHTML = `<div class="empty-history-text">Chưa có cuộc trò chuyện nào</div>`;
+            return;
+        }
+
+        sessionList.innerHTML = sessions.map(s => `
+            <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" data-id="${s.id}">
+                <div class="session-title">
+                    <i class="fa-regular fa-message"></i>
+                    <span>${escapeHtml(s.title)}</span>
+                </div>
+                <button class="delete-session-btn" data-id="${s.id}" title="Xóa phiên này">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        `).join('');
+
+        sessionList.querySelectorAll('.session-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const id = item.getAttribute('data-id');
+                if (id !== currentSessionId) {
+                    currentSessionId = id;
+                    renderSessionList();
+                    loadActiveSessionToUI();
+                }
+            });
+        });
+
+        sessionList.querySelectorAll('.delete-session-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.getAttribute('data-id');
+                sessions = sessions.filter(s => s.id !== id);
+                saveSessionsToStorage();
+                if (currentSessionId === id) {
+                    currentSessionId = sessions.length > 0 ? sessions[0].id : createNewSessionObject().id;
+                }
+                renderSessionList();
+                loadActiveSessionToUI();
+            });
+        });
+    }
+
+    function loadActiveSessionToUI() {
+        const active = getCurrentSession();
+        chatHistory.innerHTML = '';
+
+        if (!active || !active.messages || active.messages.length === 0) {
+            chatHistory.appendChild(welcomeScreen);
+            welcomeScreen.style.display = 'flex';
+        } else {
+            welcomeScreen.style.display = 'none';
+            active.messages.forEach(msg => {
+                if (msg.role === 'user') {
+                    appendUserMessage(msg.content);
+                } else if (msg.role === 'assistant') {
+                    const row = document.createElement('div');
+                    row.className = 'message-row assistant-row';
+                    row.innerHTML = `
+                        <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+                        <div class="message-content">
+                            <div class="message-text"></div>
+                        </div>
+                    `;
+                    chatHistory.appendChild(row);
+                    animateResponseText(row.querySelector('.message-text'), msg.content);
+                    if (msg.sources && msg.sources.length > 0) {
+                        renderSourceBadges(row.querySelector('.message-content'), msg.sources);
+                    }
+                }
+            });
+        }
+        scrollToBottom();
+    }
+
+    function getHistoryForApi() {
+        const active = getCurrentSession();
+        if (!active || !active.messages) return [];
+        // Lấy tối đa 6 tin nhắn gần nhất để làm ngữ cảnh history
+        const recent = active.messages.slice(-6);
+        return recent.map(m => ({
+            role: m.role,
+            content: m.content
+        }));
+    }
 
     // --- Health Check ---
     async function checkHealth() {
@@ -163,7 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // Event listener xóa file
         docList.querySelectorAll('.delete-doc-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -272,8 +419,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const query = chatInput.value.trim();
         if (!query || isGenerating) return;
 
+        let activeSession = getCurrentSession();
+        if (!activeSession) {
+            activeSession = createNewSessionObject();
+            currentSessionId = activeSession.id;
+        }
+
+        const historyForApi = getHistoryForApi();
+
         // Ẩn welcome screen
         welcomeScreen.style.display = 'none';
+
+        // Thêm câu hỏi người dùng vào session
+        const isFirstMessage = activeSession.messages.length === 0;
+        activeSession.messages.push({ role: 'user', content: query });
+
+        if (isFirstMessage) {
+            activeSession.title = query.length > 22 ? query.substring(0, 22) + '...' : query;
+        }
+
+        saveSessionsToStorage();
+        renderSessionList();
 
         // Hiển thị tin nhắn người dùng
         appendUserMessage(query);
@@ -293,7 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: query })
+                body: JSON.stringify({
+                    question: query,
+                    history: historyForApi
+                })
             });
 
             if (!res.ok) {
@@ -310,6 +479,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.sources && data.sources.length > 0) {
                 renderSourceBadges(assistantRow.querySelector('.message-content'), data.sources);
             }
+
+            // Lưu câu trả lời assistant vào session
+            activeSession.messages.push({
+                role: 'assistant',
+                content: data.answer,
+                sources: data.sources || []
+            });
+            saveSessionsToStorage();
+
         } catch (err) {
             assistantRow.querySelector('.message-text').innerHTML = `
                 <div style="color:var(--danger);">
@@ -341,7 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="avatar"><i class="fa-solid fa-robot"></i></div>
             <div class="message-content">
                 <div class="message-text">
-                    <i class="fa-solid fa-circle-notch fa-spin text-accent"></i> Đang tìm kiếm và xử lý câu trả lời...
+                    <i class="fa-solid fa-circle-notch fa-spin text-accent"></i> Đang suy nghĩ và xử lý ngữ cảnh...
                 </div>
             </div>
         `;
@@ -353,7 +531,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const parsedHtml = window.marked ? marked.parse(fullText) : fullText;
         container.innerHTML = parsedHtml;
 
-        // Format màu cho code blocks
         if (window.hljs) {
             container.querySelectorAll('pre code').forEach((block) => {
                 hljs.highlightElement(block);
@@ -380,7 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Xem chi tiết nguồn
         sourcesDiv.querySelectorAll('.source-badge').forEach(badge => {
             badge.addEventListener('click', () => {
                 const idx = parseInt(badge.getAttribute('data-index'));
@@ -408,6 +584,18 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModalBtn?.addEventListener('click', () => sourceModal.classList.remove('active'));
     sourceModal?.addEventListener('click', (e) => {
         if (e.target === sourceModal) sourceModal.classList.remove('active');
+    });
+
+    // --- Suggestion Cards Click Event Delegation ---
+    document.addEventListener('click', (e) => {
+        const card = e.target.closest('.suggestion-card');
+        if (card) {
+            const promptText = card.getAttribute('data-prompt');
+            if (promptText && !isGenerating) {
+                chatInput.value = promptText;
+                handleSendMessage();
+            }
+        }
     });
 
     // --- Helpers ---

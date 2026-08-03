@@ -10,6 +10,7 @@
 ![NumPy Vector Search](https://img.shields.io/badge/Vector_Search-NumPy_Cosine-013243?logo=numpy&logoColor=white)
 ![PyPDF](https://img.shields.io/badge/PDF_Parser-PyPDF-red)
 ![Pytest](https://img.shields.io/badge/Testing-Pytest-0A9EDC?logo=pytest&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker&logoColor=white)
 ![Web UI Demo](https://img.shields.io/badge/Demo-HTML5%2FCSS3%2FJS-E34F26?logo=html5&logoColor=white)
 
 ---
@@ -18,7 +19,7 @@
 
 **ChatNTQ RAG** là dự án nghiên cứu và triển khai quy trình **Retrieval-Augmented Generation (RAG)** giải quyết bài toán tra cứu tri thức ngữ nghĩa trên tập tài liệu tùy chỉnh mà không cần huấn luyện lại mô hình (Zero-Shot Knowledge Ingestion).
 
-Dự án tập trung chuyên sâu vào **Pipeline xử lý dữ liệu (Data Pipeline)**, **Mô hình hóa Vector không gian (Vector Embeddings)**, **Thuật toán tìm kiếm độ tương đồng Cosine Similarity** và **Kỹ thuật Prompt Engineering** nhằm triệt tiêu hoàn toàn hiện tượng ảo giác (hallucination) của LLM.
+Dự án tập trung chuyên sâu vào **Pipeline xử lý dữ liệu (Data Pipeline)**, **Mô hình hóa Vector không gian (Vector Embeddings)**, **Thuật toán tìm kiếm độ tương đồng Cosine Similarity**, **Trí nhớ hội thoại đa lượt (Multi-turn RAG Memory)** và **Kỹ thuật Prompt Engineering** nhằm triệt tiêu hoàn toàn hiện tượng ảo giác (hallucination) của LLM.
 
 ---
 
@@ -35,11 +36,19 @@ Dự án tập trung chuyên sâu vào **Pipeline xử lý dữ liệu (Data Pip
 ### 3. Thuật Toán Tìm Kiếm Vector (Vector Search với NumPy & L2 Normalization)
 - **Chuẩn hóa L2 (L2 Normalization)**: Tự động đưa mọi vector về độ dài đơn vị $\|V\| = 1$. Khi mọi vector có độ dài 1, phép tính Cosine Similarity rút gọn về phép tính **Tích vô hướng (Dot Product)**:
   $$\text{Cosine Similarity}(Q, V) = Q \cdot V^T$$
-- **High-Performance Matrix Vectorization**: Sử dụng phép nhân ma trận NumPy cho phép tính toán và xếp hạng Top-$K$ đoạn tài liệu có điểm tương đồng cao nhất trong thời gian tính bằng miligiây ($O(N \cdot D)$).
+- **High-Performance Matrix Vectorization**: Sử dụng phép nhân ma trận NumPy cho phép tính toán và xếp hạng Top-$K$ ($K=8$) đoạn tài liệu có điểm tương đồng cao nhất trong thời gian tính bằng miligiây ($O(N \cdot D)$).
 
-### 4. Triệt Tiêu Ảo Giác (Hallucination Mitigation & Prompt Engineering)
-- Ép LLM (Google Gemini `gemini-flash-latest`) trả lời **nghiêm ngặt và duy nhất** dựa trên khối ngữ cảnh được truy xuất ($K=4$).
-- Nếu câu hỏi không nằm trong phạm vi dữ liệu trích xuất, mô hình được cấu hình để phản hồi trung thực "không tìm thấy thông tin trong tài liệu", tuyệt đối không tự bịa đặt.
+### 4. Trí Nhớ Hội Thoại Đa Lượt & Tái Cấu Trúc Câu Hỏi (Conversational Multi-Turn RAG)
+- **Standalone Query Rewriting**: Khi người dùng đặt câu hỏi nối tiếp chứa đại từ thay thế (*"nó"*, *"số tiền đó"*, *"câu trước"*), Gemini LLM sẽ tự động phân tích lịch sử hội thoại và tái cấu trúc câu hỏi thành một **Câu hỏi độc lập đầy đủ thực thể (Standalone Query)** trước khi truy vấn kho vector.
+- **Tối ưu hóa Hạn ngạch (Quota Optimization)**: Bộ lọc heuristic `_is_followup_question()` giúp phát hiện chính xác câu hỏi nối tiếp, bỏ qua việc gọi LLM viết lại cho các câu hỏi độc lập rõ nghĩa, giúp **tiết kiệm 50% số lượt gọi Gemini API**.
+
+### 5. Tự Động Nạp & Cập Nhật Kho Vector (Auto-Ingestion & Hot-Reload)
+- **Filesystem Timestamp Tracking**: Phương thức `_check_and_auto_ingest_if_needed()` tự động theo dõi thời gian thay đổi (`st_mtime`) của các file tài liệu trong `data/raw/`.
+- Khi người dùng copy file mới (`.md`, `.txt`, `.pdf`) vào kho, hệ thống tự động phát hiện và kích hoạt nạp vector tức thì mà không cần dừng server hay thao tác thủ công.
+
+### 6. Triệt Tiêu Ảo Giác & Đảm Bảo Đầy Đủ Bảng Biểu (Exhaustive Prompting)
+- Ép LLM (Google Gemini `gemini-flash-latest`) trả lời **nghiêm ngặt và duy nhất** dựa trên khối ngữ cảnh được truy xuất ($K=8$).
+- System instructions yêu cầu AI giữ trọn vẹn 100% tất cả các dòng, các cột và chi tiết số liệu dạng bảng (bán hàng, danh sách khách hàng) mà không tự ý bỏ bớt hay cắt ngắn.
 
 ---
 
@@ -59,11 +68,12 @@ Dự án tập trung chuyên sâu vào **Pipeline xử lý dữ liệu (Data Pip
 ┌────────────────────────────────────────────────────────────────────────┼───────────────┐
 │                        QUERY & RETRIEVAL PIPELINE (ONLINE PHASE)       │               │
 │                                                                        ▼               │
-│  [User Query] ──► [Query Embedder] ──► [Cosine Matrix Search] ──► [Top-K Context]      │
-│                   (E5 Query Format)    (L2 Normalized Dot Product)     │               │
+│  [User Query] ──► [Standalone Rewriter] ──► [Query Embedder] ──► [Cosine Search]       │
+│  (+ Chat History)  (Gemini LLM / Heuristic) (E5 Query Format)    (L2 Normalized Dot)   │
+│                                                                        │               │
 │                                                                        ▼               │
-│  [Final Answer] ◄── [Google Gemini LLM] ◄────────────────────── [Prompt Builder]      │
-│   (+ Sources)       (Temperature=0)                              (System Instruction)  │
+│  [Final Answer] ◄── [Google Gemini LLM] ◄────────────────────── [Top-K Context]        │
+│   (+ Sources)       (System Instructions)                         (Top K=8 Chunks)     │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -71,33 +81,35 @@ Dự án tập trung chuyên sâu vào **Pipeline xử lý dữ liệu (Data Pip
 
 ## 4. Cấu Trúc Thư Mục Dự Án & Chi Tiết Các Thành Phần
 
-Dưới đây là sơ đồ cấu trúc tập tin chi tiết của dự án và chức năng của từng thành phần:
-
 ```text
 LOCAL-RAG/
+├── .dockerignore             # Danh sách loại trừ các file tạm/venv khi build Docker Image
 ├── .env.example              # Mẫu khai báo các biến môi trường (API Key, model parameters)
-├── .gitignore                # Loại trừ các tập tin nhạy cảm (.env) và dữ liệu trung gian nhị phân khỏi Git
-├── pyproject.toml            # Khai báo gói ứng dụng Python (chatntq-rag) và danh sách dependencies
+├── .gitignore                # Loại trừ các tập tin nhạy cảm (.env) và dữ liệu nhị phân khỏi Git
+├── Dockerfile                # Cấu hình đóng gói Docker Container (nạp sẵn weights E5 model)
+├── docker-compose.yml        # Cấu hình khởi chạy nhanh Docker Compose cùng Volume persistence
+├── pyproject.toml            # Khai báo gói ứng dụng Python (chatntq-rag) và dependencies
 ├── requirements.txt          # Danh sách các thư viện Python phụ thuộc cần cài đặt
 ├── README.md                 # Tài liệu mô tả kiến trúc và hướng dẫn vận hành dự án
 │
 ├── data/                     # Quản lý tập trung dữ liệu của hệ thống RAG
 │   ├── raw/                  # Nơi chứa tài liệu thô đầu vào (.txt, .md, .pdf)
-│   │   └── RAG.md            # Tài liệu tri thức mẫu về RAG và thông tin dự án
+│   │   ├── RAG.md            # Tài liệu tri thức chuẩn về RAG và hướng dẫn dự án
+│   │   └── sales.md          # Tài liệu test dữ liệu bảng biểu bán hàng & tính toán
 │   └── processed/            # Nơi lưu trữ tập tin kho dữ liệu vector store (.npz & .meta.json)
 │
 ├── src/                      # Mã nguồn chính của ứng dụng
 │   ├── api/                  # Tầng Web API & Giao diện Demo minh họa
 │   │   ├── __init__.py       # Đánh dấu package Python cho tầng API
-│   │   ├── main.py           # Khởi tạo ứng dụng FastAPI, cấu hình CORS và mount tập tin tĩnh
+│   │   ├── main.py           # Khởi tạo FastAPI, CORS, mount file tĩnh & bộ lọc log EndpointFilter
 │   │   ├── routes.py         # Định nghĩa các REST Endpoints (/api/chat, /api/documents, /api/upload...)
-│   │   ├── schemas.py        # Các mô hình Pydantic xác thực dữ liệu đầu vào/đầu ra
+│   │   ├── schemas.py        # Các mô hình Pydantic xác thực dữ liệu đầu vào/đầu ra (kèm ChatMessage)
 │   │   └── static/           # Tài nguyên giao diện Web Single Page Application
-│   │       ├── index.html    # Cấu trúc HTML giao diện ChatGPT Dark Mode
+│   │       ├── index.html    # Cấu trúc HTML giao diện Dark Mode kèm Thẻ câu hỏi mẫu
 │   │       ├── css/
-│   │       │   └── style.css # Hệ thống thiết kế CSS (Dark Theme, Glassmorphism, Responsive)
+│   │       │   └── style.css # Hệ thống thiết kế CSS (Dark Theme, Glassmorphism, Session List)
 │   │       └── js/
-│   │           └── app.js    # Logic JavaScript phía client (gọi API, render Markdown, Drag & Drop upload)
+│   │           └── app.js    # Logic JS phía client (LocalStorage Session Manager, Event Delegation)
 │   │
 │   └── rag/                  # Package lõi xử lý quy trình Data & AI RAG Engine
 │       ├── __init__.py       # Đánh dấu package Python và xuất bản lớp RAGPipeline
@@ -108,12 +120,12 @@ LOCAL-RAG/
 │       ├── vector_store.py   # Kho lưu trữ vector, chuẩn hóa L2 và thuật toán Cosine Similarity bằng NumPy
 │       ├── llm.py            # Giao diện đóng gói các cuộc gọi API tới Google Gemini LLM
 │       ├── prompts.py        # Thiết kế System Instructions và Prompt Templates kiểm soát ảo giác
-│       └── pipeline.py       # Bộ điều phối chính kết nối 2 giai đoạn Offline (Ingest) & Online (Answer)
+│       └── pipeline.py       # Bộ điều phối chính kết nối Ingest, Auto-reload & Standalone Query Rewriting
 │
 ├── scripts/                  # Các kịch bản khởi chạy dự án
-│   ├── run_web.py            # Script khởi chạy máy chủ Web FastAPI và mở trình duyệt tự động
+│   ├── run_web.py            # Script khởi chạy máy chủ Web FastAPI (host=0.0.0.0, port=8000)
 │   ├── ingest.py             # Script dòng lệnh (CLI) nạp tài liệu vào kho vector
-│   └── ask.py                # Script dòng lệnh (CLI) hỏi đáp trực tiếp trong terminal
+│   └── ask.py                # Script dòng lệnh (CLI) hỏi đáp Multi-turn trong terminal
 │
 └── tests/                    # Thư mục kiểm thử tự động
     ├── test_api.py           # Bộ kiểm thử unit test cho các đường dẫn API Endpoints
@@ -131,12 +143,14 @@ LOCAL-RAG/
 | **Đại số & Vector** | `NumPy` | Tính toán ma trận vector và độ tương đồng Cosine |
 | **LLM Chat** | `google-genai` (Gemini API) | Sinh phản hồi tổng hợp từ ngữ cảnh trích xuất |
 | **Xử lý Tài liệu** | `pypdf`, `pathlib` | Đọc dữ liệu tập tin PDF, Markdown, Text |
-| **Demo Web Interface** | `FastAPI`, `Uvicorn`, `HTML/JS` | Giao diện minh họa demo kết quả tương tác RAG |
+| **Backend API** | `FastAPI`, `Uvicorn` | RESTful API bất đồng bộ kèm bộ lọc log `EndpointFilter` |
+| **Frontend UI** | HTML5, CSS3, JavaScript (Vanilla) | Single Page Application với LocalStorage Session Manager |
 | **Testing** | `pytest` | Kiểm thử tự động thuật toán chia chunk & vector search |
+| **Đóng gói** | `Docker`, `Docker Compose` | Đóng gói ứng dụng Containerized tối ưu hóa weights model |
 
 ---
 
-## 6. Hướng Dẫn Cài Đặt & Chạy Demo
+## 6. Hướng Dẫn Cài Đặt & Chạy Trên Máy Cục Bộ
 
 ### Bước 6.1 — Khởi Tạo Môi Trường Ảo
 
@@ -161,7 +175,7 @@ GEMINI_CHAT_MODEL=gemini-flash-latest
 EMBED_MODEL=intfloat/multilingual-e5-base
 RAG_CHUNK_SIZE=800
 RAG_CHUNK_OVERLAP=120
-RAG_TOP_K=4
+RAG_TOP_K=8
 ```
 
 ### Bước 6.4 — Chạy Demo Kiểm Thử
@@ -170,7 +184,7 @@ RAG_TOP_K=4
 ```powershell
 python scripts/run_web.py
 ```
-*Trình duyệt sẽ tự động mở `http://127.0.0.1:8000` để bạn trải nghiệm thử nghiệm đặt câu hỏi cho RAG Model.*
+*Trình duyệt sẽ mở `http://127.0.0.1:8000` để bạn trải nghiệm thử nghiệm đặt câu hỏi.*
 
 #### Cách B: Chạy Nạp Data & Thử Nghiệm Qua CLI (Terminal)
 Nạp dữ liệu tài liệu thô trong `data/raw/`:
@@ -190,4 +204,35 @@ Chạy pytest để kiểm tra độ chính xác của các thuật toán xử l
 
 ```powershell
 pytest
+```
+
+---
+
+## 8. Đóng Gói & Triển Khai Docker (Containerization & Deployment)
+
+Dự án đã được hoàn thiện đóng gói Docker Image tối ưu hóa dung lượng (Python 3.11-slim) và nạp sẵn weights mô hình embedding để khởi động cực nhanh trên mọi môi trường Server/Cloud.
+
+### Cách A — Khởi chạy & Theo dõi trực tiếp bằng Docker Compose (Khuyên dùng)
+
+```bash
+docker-compose up --build
+```
+- *Trình duyệt truy cập giao diện Web UI tại: `http://localhost:8000`.*
+- *Dòng Log nhật ký sẽ hiển thị trực tiếp trên Terminal.*
+- *Khi muốn dừng máy chủ, chỉ cần bấm **`Ctrl + C`**.*
+
+### Cách B — Khởi chạy ở chế độ chạy ngầm (Background Mode)
+
+```bash
+docker-compose up -d --build
+```
+
+### Cách C — Build & Run thủ công bằng Docker CLI
+
+```bash
+# 1. Build Docker Image
+docker build -t chatntq-rag .
+
+# 2. Khởi chạy Docker Container
+docker run -p 8000:8000 --env-file .env -v ${PWD}/data/raw:/app/data/raw --name chatntq_rag_app chatntq-rag
 ```

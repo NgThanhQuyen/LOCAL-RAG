@@ -788,3 +788,82 @@ body {
         display: flex;
     }
 }
+
+/* Chat Session History List */
+.history-section {
+    max-height: 180px;
+    display: flex;
+    flex-direction: column;
+}
+
+.session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 140px;
+    padding-right: 4px;
+}
+
+.session-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.session-item:hover {
+    background-color: var(--bg-card-hover);
+    color: var(--text-primary);
+}
+
+.session-item.active {
+    background-color: var(--accent-light);
+    color: var(--accent);
+    border-color: rgba(16, 163, 127, 0.3);
+    font-weight: 500;
+}
+
+.session-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.delete-session-btn {
+    opacity: 0;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.session-item:hover .delete-session-btn {
+    opacity: 1;
+}
+
+.delete-session-btn:hover {
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.empty-history-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 6px 0;
+}
+

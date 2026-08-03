@@ -19,7 +19,7 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=v2_multiturn">
 </head>
 
 <body>
@@ -39,6 +39,19 @@
             <button class="new-chat-btn" id="new-chat-btn">
                 <i class="fa-solid fa-plus"></i> Cuộc trò chuyện mới
             </button>
+
+            <!-- Danh sách các cuộc trò chuyện đã lưu -->
+            <div class="sidebar-section history-section">
+                <div class="section-header">
+                    <h3><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Trò Chuyện</h3>
+                    <button class="icon-btn clear-history-btn" id="clear-all-sessions-btn" title="Xóa tất cả lịch sử">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
+                <div class="session-list" id="session-list">
+                    <div class="empty-history-text">Chưa có cuộc trò chuyện nào</div>
+                </div>
+            </div>
 
             <!-- Danh sách tài liệu -->
             <div class="sidebar-section">
@@ -111,22 +124,22 @@
 
                     <div class="suggestion-grid">
                         <div class="suggestion-card"
-                            data-prompt="Dự án ChatNTQ RAG là gì và sử dụng những công nghệ nào?">
-                            <i class="fa-solid fa-circle-info"></i>
-                            <h4>ChatNTQ RAG là gì?</h4>
-                            <p>Tổng quan kiến trúc & công nghệ dự án.</p>
-                        </div>
-                        <div class="suggestion-card"
                             data-prompt="RAG là gì và quy trình 6 bước cốt lõi hoạt động như thế nào?">
                             <i class="fa-solid fa-diagram-project"></i>
-                            <h4>Quy trình RAG</h4>
-                            <p>6 bước từ Ingest đến Gemini LLM.</p>
+                            <h4>RAG là gì?</h4>
+                            <p>Khái niệm cốt lõi & quy trình 6 bước.</p>
                         </div>
                         <div class="suggestion-card"
-                            data-prompt="Làm thế nào để khởi chạy ứng dụng web và nạp thêm tài liệu mới?">
-                            <i class="fa-solid fa-circle-question"></i>
-                            <h4>Hướng dẫn & FAQ</h4>
-                            <p>Cách nạp tài liệu và khởi chạy web.</p>
+                            data-prompt="Dự án ChatNTQ RAG là gì và kiến trúc công nghệ ra sao?">
+                            <i class="fa-solid fa-robot"></i>
+                            <h4>ChatNTQ RAG là gì?</h4>
+                            <p>Tổng quan kiến trúc & công nghệ AI.</p>
+                        </div>
+                        <div class="suggestion-card"
+                            data-prompt="Những lưu ý và kinh nghiệm tối ưu khi sử dụng ChatNTQ RAG là gì?">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <h4>Lưu ý khi sử dụng</h4>
+                            <p>Kinh nghiệm tối ưu kho dữ liệu & độ chính xác.</p>
                         </div>
                     </div>
                 </div>
@@ -165,7 +178,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <!-- Application JS -->
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=v3_click_suggestion"></script>
 </body>
 
 </html>

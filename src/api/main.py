@@ -1,11 +1,29 @@
-"""Ứng dụng Web FastAPI cho hệ thống ChatNTQ RAG."""
-
+import logging
+import os
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .routes import router
+
+# Ẩn các cảnh báo hệ thống không cần thiết
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
+class EndpointFilter(logging.Filter):
+    """Lọc bỏ log kiểm tra tự động (/api/health, /api/documents) để console sạch sẽ, chỉ hiện khi người dùng thao tác."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if "GET /api/health" in msg or "GET /api/documents" in msg:
+            return False
+        return True
+
+
+# Áp dụng bộ lọc cho Uvicorn Access Logger
+logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 
 # Đường dẫn thư mục giao diện web tĩnh
 BASE_DIR = Path(__file__).resolve().parent

@@ -3,10 +3,20 @@
 from pydantic import BaseModel, Field
 
 
+class ChatMessage(BaseModel):
+    """Một tin nhắn trong lịch sử cuộc trò chuyện."""
+
+    role: str = Field(..., description="Vai trò: 'user' hoặc 'assistant'")
+    content: str = Field(..., description="Nội dung tin nhắn")
+
+
 class QueryRequest(BaseModel):
     """Payload gửi lên từ client khi hỏi đáp."""
 
     question: str = Field(..., min_length=1, description="Câu hỏi của người dùng")
+    history: list[ChatMessage] = Field(
+        default_factory=list, description="Lịch sử tin nhắn gần đây trong cuộc trò chuyện"
+    )
 
 
 class SourceItem(BaseModel):

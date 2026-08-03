@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Hệ thống RAG tìm kiếm ngữ nghĩa với Google Gemini và FastAPI Web Interface"
 requires-python = ">=3.10"
 dependencies = [
+    "sentence-transformers>=3.0.0",
     "google-genai>=1.0.0",
     "python-dotenv>=1.0.0",
     "numpy>=1.26.0",

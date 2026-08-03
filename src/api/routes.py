@@ -44,7 +44,8 @@ def chat_query(
 ):
     """Gửi câu hỏi tới RAG Pipeline và nhận câu trả lời kèm nguồn trích dẫn."""
     try:
-        res = pipeline.answer(request.question)
+        history_dicts = [msg.model_dump() for msg in request.history]
+        res = pipeline.answer(request.question, history=history_dicts)
         sources = [
             SourceItem(source=s.source, text=s.text, score=s.score)
             for s in res.sources
@@ -56,9 +57,14 @@ def chat_query(
             detail="Chưa có Vector Store. Hãy nạp tài liệu trước khi đặt câu hỏi.",
         ) from e
     except Exception as e:
+        err_str = str(e)
+        if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+            err_msg = "Hệ thống đang chạm giới hạn tần suất gọi API miễn phí của Google Gemini (tối đa 15 câu/phút). Vui lòng chờ khoảng 30 - 60 giây rồi thử lại!"
+        else:
+            err_msg = f"Lỗi khi xử lý câu hỏi: {err_str}"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Lỗi khi xử lý câu hỏi: {str(e)}",
+            detail=err_msg,
         ) from e
 
 

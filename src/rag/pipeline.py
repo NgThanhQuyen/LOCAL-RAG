@@ -70,27 +70,88 @@ class RAGPipeline:
         store = VectorStore.build(vectors, metadatas)
         store.save(self.settings.store_path)
         self._store = store
+        if self.settings.store_path.exists():
+            self._store_mtime = self.settings.store_path.stat().st_mtime
         return len(chunks)
 
-    def answer(self, question: str) -> RAGAnswer:
-        """Thực hiện truy vấn câu hỏi, tìm kiếm các đoạn văn bản liên quan và sinh câu trả lời."""
+    def answer(
+        self, question: str, history: list[dict[str, str]] | None = None
+    ) -> RAGAnswer:
+        """Thực hiện truy vấn câu hỏi (kèm lịch sử hội thoại), tìm kiếm văn bản liên quan và sinh câu trả lời."""
         store = self._get_store()
 
-        # Nhúng câu hỏi và truy tìm các đoạn tài liệu có điểm tương đồng cao nhất
-        query_vector = self.embedder.embed_query(question)
+        # Tạo chuỗi văn bản lịch sử hội thoại
+        history_str = prompts.build_history_str(history)
+
+        # Nếu có lịch sử và câu hỏi có dấu hiệu nối tiếp, dùng LLM viết lại thành Standalone Query
+        standalone_question = question
+        if history_str and self._is_followup_question(question):
+            try:
+                condense_prompt = prompts.CONDENSE_QUESTION_PROMPT.format(
+                    chat_history=history_str.strip(), question=question
+                )
+                rewritten = self.llm.generate(condense_prompt).strip()
+                if rewritten:
+                    standalone_question = rewritten
+            except Exception:
+                standalone_question = question
+
+        # Nhúng câu hỏi độc lập và tìm kiếm các đoạn tài liệu có điểm tương đồng cao nhất
+        query_vector = self.embedder.embed_query(standalone_question)
         results = store.search(query_vector, self.settings.top_k)
 
-        # Tổng hợp ngữ cảnh và tạo câu trả lời từ LLM
+        # Tổng hợp ngữ cảnh tài liệu + lịch sử hội thoại để tạo câu trả lời từ Gemini LLM
         context = prompts.build_context(results)
         prompt = prompts.RAG_PROMPT_TEMPLATE.format(
-            context=context, question=question
+            history_section=history_str, context=context, question=question
         )
         answer_text = self.llm.generate(prompt, system=prompts.SYSTEM_PROMPT)
 
         return RAGAnswer(answer=answer_text, sources=results)
 
     def _get_store(self) -> VectorStore:
-        """Nạp dữ liệu từ đĩa lưu trữ hoặc trả về đối tượng đã lưu trong bộ nhớ tạm."""
-        if self._store is None:
-            self._store = VectorStore.load(self.settings.store_path)
+        """Nạp dữ liệu từ đĩa lưu trữ, tự động nạp lại nếu phát hiện tài liệu mới hoặc file vector thay đổi."""
+        self._check_and_auto_ingest_if_needed()
+
+        store_path = self.settings.store_path
+        if not store_path.exists():
+            raise FileNotFoundError(f"Không tìm thấy file vector store tại {store_path}")
+
+        mtime = store_path.stat().st_mtime
+        if self._store is None or getattr(self, "_store_mtime", 0) != mtime:
+            self._store = VectorStore.load(store_path)
+            self._store_mtime = mtime
         return self._store
+
+    def _check_and_auto_ingest_if_needed(self) -> None:
+        """Tự động nạp lại vector store nếu phát hiện file mới/sửa trong data/raw."""
+        raw_dir = self.settings.raw_dir
+        store_path = self.settings.store_path
+        if not raw_dir.exists():
+            return
+
+        allowed_exts = {".txt", ".md", ".markdown", ".pdf"}
+        raw_files = [
+            p for p in raw_dir.rglob("*")
+            if p.is_file() and p.suffix.lower() in allowed_exts
+        ]
+        if not raw_files:
+            return
+
+        if not store_path.exists():
+            self.ingest()
+            return
+
+        store_mtime = store_path.stat().st_mtime
+        if any(p.stat().st_mtime > store_mtime for p in raw_files):
+            self.ingest()
+
+    def _is_followup_question(self, question: str) -> bool:
+        """Kiểm tra xem câu hỏi có chứa từ khóa dấu hiệu của câu hỏi nối tiếp hay không."""
+        q_lower = question.lower().strip()
+        keywords = {
+            "nó", "đó", "này", "trước", "vừa", "trên", "ấy", "họ", "chia",
+            "câu", "gì", "ai", "bao nhiêu", "kết quả", "thế nào", "sao", "bạn"
+        }
+        words = set(q_lower.split())
+        return len(words) <= 5 or bool(words & keywords)
