@@ -16,6 +16,20 @@ from .loader import load_documents
 from .vector_store import SearchResult, VectorStore
 
 
+def get_allowed_roles_for_source(source: str) -> list[str]:
+    """Phân quyền truy cập tài liệu dựa trên tên file nguồn."""
+    s = source.lower()
+    if "pccc" in s or "thoat-hiem" in s:
+        return ["guest", "user", "admin_ops", "admin_model", "admin"]
+    elif "nguoi-dung" in s or "user" in s:
+        return ["user", "admin_ops", "admin_model", "admin"]
+    elif "van-hanh" in s or "admin-ops" in s:
+        return ["admin_ops", "admin"]
+    elif "mo-hinh" in s or "admin-model" in s:
+        return ["admin_model", "admin"]
+    return ["guest", "user", "admin_ops", "admin_model", "admin"]
+
+
 @dataclass
 class RAGAnswer:
     """Kết quả phản hồi bao gồm nội dung câu trả lời và danh sách nguồn tài liệu tham khảo."""
@@ -64,7 +78,13 @@ class RAGPipeline:
         )
         vectors = self.embedder.embed_documents([c.text for c in chunks])
         metadatas = [
-            {"text": c.text, "source": c.source, "index": c.index} for c in chunks
+            {
+                "text": c.text,
+                "source": c.source,
+                "index": c.index,
+                "allowed_roles": get_allowed_roles_for_source(c.source),
+            }
+            for c in chunks
         ]
 
         store = VectorStore.build(vectors, metadatas)
@@ -75,9 +95,12 @@ class RAGPipeline:
         return len(chunks)
 
     def answer(
-        self, question: str, history: list[dict[str, str]] | None = None
+        self,
+        question: str,
+        history: list[dict[str, str]] | None = None,
+        role: str = "guest",
     ) -> RAGAnswer:
-        """Thực hiện truy vấn câu hỏi (kèm lịch sử hội thoại), tìm kiếm văn bản liên quan và sinh câu trả lời."""
+        """Thực hiện truy vấn câu hỏi (kèm lịch sử hội thoại và vai trò người dùng), tìm kiếm và sinh câu trả lời."""
         store = self._get_store()
 
         # Tạo chuỗi văn bản lịch sử hội thoại
@@ -96,16 +119,17 @@ class RAGPipeline:
             except Exception:
                 standalone_question = question
 
-        # Nhúng câu hỏi độc lập và tìm kiếm các đoạn tài liệu có điểm tương đồng cao nhất
+        # Nhúng câu hỏi độc lập và tìm kiếm các đoạn tài liệu có điểm tương đồng cao nhất theo vai trò
         query_vector = self.embedder.embed_query(standalone_question)
-        results = store.search(query_vector, self.settings.top_k)
+        results = store.search(query_vector, self.settings.top_k, allowed_role=role)
 
         # Tổng hợp ngữ cảnh tài liệu + lịch sử hội thoại để tạo câu trả lời từ Gemini LLM
         context = prompts.build_context(results)
         prompt = prompts.RAG_PROMPT_TEMPLATE.format(
             history_section=history_str, context=context, question=question
         )
-        answer_text = self.llm.generate(prompt, system=prompts.SYSTEM_PROMPT)
+        system_prompt = prompts.get_system_prompt_for_role(role)
+        answer_text = self.llm.generate(prompt, system=system_prompt)
 
         return RAGAnswer(answer=answer_text, sources=results)
 

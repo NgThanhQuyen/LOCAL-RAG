@@ -31,3 +31,10 @@ def test_chat_invalid_request():
     response = client.post("/api/chat", json={"question": ""})
     # Kiểm tra phản hồi lỗi xác thực dữ liệu đầu vào (HTTP 422)
     assert response.status_code == 422
+
+
+def test_widget_js_endpoint():
+    response = client.get("/widget.js")
+    assert response.status_code == 200
+    assert "application/javascript" in response.headers.get("content-type", "")
+    assert len(response.text) > 1000

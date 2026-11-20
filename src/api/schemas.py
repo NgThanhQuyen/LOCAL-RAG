@@ -17,6 +17,10 @@ class QueryRequest(BaseModel):
     history: list[ChatMessage] = Field(
         default_factory=list, description="Lịch sử tin nhắn gần đây trong cuộc trò chuyện"
     )
+    role: str = Field(
+        default="guest",
+        description="Vai trò người dùng: 'guest', 'user', 'admin_ops', 'admin_model'",
+    )
 
 
 class SourceItem(BaseModel):

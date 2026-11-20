@@ -14,8 +14,11 @@ class LocalEmbedder:
     """Quản lý mô hình nhúng văn bản cục bộ bằng sentence-transformers."""
 
     def __init__(self, model_name: str):
-        # Khởi tạo mô hình sentence-transformers
-        self._model = SentenceTransformer(model_name)
+        # Ưu tiên nạp từ cache cục bộ (local_files_only) để khởi động cực nhanh và tránh lỗi mạng
+        try:
+            self._model = SentenceTransformer(model_name, local_files_only=True)
+        except Exception:
+            self._model = SentenceTransformer(model_name)
         # Các mô hình dòng E5 yêu cầu tiền tố passage/query
         self._is_e5 = "e5" in model_name.lower()
 

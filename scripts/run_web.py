@@ -1,5 +1,6 @@
 """Script khởi chạy Web Application cho hệ thống Local RAG."""
 
+import os
 import sys
 import threading
 import time
@@ -30,7 +31,7 @@ def open_browser_later(url: str, delay: float = 2.0) -> None:
 
 def main() -> None:
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", "8000"))
+    port = int(os.getenv("PORT", "8001"))
     url = f"http://127.0.0.1:{port}"
 
     print(f"Đang nạp các thư viện AI & Mô hình Vector Embedding (mất khoảng 3-5 giây)...")

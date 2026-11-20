@@ -1,6 +1,6 @@
 # ChatNTQ RAG — Local RAG Pipeline & Semantic Search Engine
 
-**Hệ thống Tìm kiếm Ngữ nghĩa & Hỏi - Đáp Tăng Cường Truy Hồi (Retrieval-Augmented Generation) Tối Ưu Cho Dữ Liệu Văn Bản Tiếng Việt.**
+**Hệ thống Hỏi - Đáp Tăng Cường Truy Hồi (Retrieval-Augmented Generation) & Tìm Kiếm Ngữ Nghĩa Đa Vai Trò Tối Ưu Cho Tiếng Việt.**
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)
@@ -8,51 +8,23 @@
 ![Sentence Transformers](https://img.shields.io/badge/Embedding-Sentence_Transformers-FF6F00?logo=huggingface&logoColor=white)
 ![Multilingual E5](https://img.shields.io/badge/Model-Multilingual_E5_Base-orange)
 ![NumPy Vector Search](https://img.shields.io/badge/Vector_Search-NumPy_Cosine-013243?logo=numpy&logoColor=white)
-![PyPDF](https://img.shields.io/badge/PDF_Parser-PyPDF-red)
+![TypeScript](https://img.shields.io/badge/Widget-TypeScript_&_Vite-3178C6?logo=typescript&logoColor=white)
 ![Pytest](https://img.shields.io/badge/Testing-Pytest-0A9EDC?logo=pytest&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker&logoColor=white)
-![Web UI Demo](https://img.shields.io/badge/Demo-HTML5%2FCSS3%2FJS-E34F26?logo=html5&logoColor=white)
 
 ---
 
-## 1. Giới Thiệu Dự Án (Data & AI Perspective)
+## 1. Giới Thiệu Dự Án
 
-**ChatNTQ RAG** là dự án nghiên cứu và triển khai quy trình **Retrieval-Augmented Generation (RAG)** giải quyết bài toán tra cứu tri thức ngữ nghĩa trên tập tài liệu tùy chỉnh mà không cần huấn luyện lại mô hình (Zero-Shot Knowledge Ingestion).
+**ChatNTQ RAG** là một giải pháp hoàn chỉnh về **Retrieval-Augmented Generation (RAG)** cho phép tra cứu ngữ nghĩa và hỏi - đáp thông minh trên tập tài liệu tùy chỉnh (`.md`, `.txt`, `.pdf`) mà không cần huấn luyện lại mô hình ngôn ngữ lớn (Zero-Shot Knowledge Ingestion).
 
-Dự án tập trung chuyên sâu vào **Pipeline xử lý dữ liệu (Data Pipeline)**, **Mô hình hóa Vector không gian (Vector Embeddings)**, **Thuật toán tìm kiếm độ tương đồng Cosine Similarity**, **Trí nhớ hội thoại đa lượt (Multi-turn RAG Memory)** và **Kỹ thuật Prompt Engineering** nhằm triệt tiêu hoàn toàn hiện tượng ảo giác (hallucination) của LLM.
-
----
-
-## 2. Điểm Mấu Chốt Về Khoa Học Dữ Liệu & AI Trong Dự Án
-
-### 1. Quy Trình Phân Đoạn Văn Bản (Text Chunking & Overlap)
-- **Sliding Window Chunking**: Chia nhỏ văn bản thành các phân đoạn `chunk_size = 800` ký tự.
-- **Context Boundary Overlap**: Giữ độ chồng lấn `chunk_overlap = 120` ký tự giữa hai đoạn liên kề nhằm tránh mất mát thông tin tại ranh giới cắt của ngữ cảnh.
-
-### 2. Mô Hình Nhúng Vector Ngữ Nghĩa (Multilingual Vector Embeddings)
-- Sử dụng mô hình `intfloat/multilingual-e5-base` (768 chiều) thông qua thư viện `sentence-transformers` chạy **cục bộ 100% trên CPU/GPU** (không tốn API quota).
-- **Asymmetric Encoding**: Xử lý tiền tố bất đối xứng đặc thù của dòng mô hình E5 — thêm tiền tố `passage: ` khi tạo vector tài liệu và `query: ` khi nhúng câu hỏi truy vấn để tối ưu hóa khoảng cách không gian vector.
-
-### 3. Thuật Toán Tìm Kiếm Vector (Vector Search với NumPy & L2 Normalization)
-- **Chuẩn hóa L2 (L2 Normalization)**: Tự động đưa mọi vector về độ dài đơn vị $\|V\| = 1$. Khi mọi vector có độ dài 1, phép tính Cosine Similarity rút gọn về phép tính **Tích vô hướng (Dot Product)**:
-  $$\text{Cosine Similarity}(Q, V) = Q \cdot V^T$$
-- **High-Performance Matrix Vectorization**: Sử dụng phép nhân ma trận NumPy cho phép tính toán và xếp hạng Top-$K$ ($K=8$) đoạn tài liệu có điểm tương đồng cao nhất trong thời gian tính bằng miligiây ($O(N \cdot D)$).
-
-### 4. Trí Nhớ Hội Thoại Đa Lượt & Tái Cấu Trúc Câu Hỏi (Conversational Multi-Turn RAG)
-- **Standalone Query Rewriting**: Khi người dùng đặt câu hỏi nối tiếp chứa đại từ thay thế (*"nó"*, *"số tiền đó"*, *"câu trước"*), Gemini LLM sẽ tự động phân tích lịch sử hội thoại và tái cấu trúc câu hỏi thành một **Câu hỏi độc lập đầy đủ thực thể (Standalone Query)** trước khi truy vấn kho vector.
-- **Tối ưu hóa Hạn ngạch (Quota Optimization)**: Bộ lọc heuristic `_is_followup_question()` giúp phát hiện chính xác câu hỏi nối tiếp, bỏ qua việc gọi LLM viết lại cho các câu hỏi độc lập rõ nghĩa, giúp **tiết kiệm 50% số lượt gọi Gemini API**.
-
-### 5. Tự Động Nạp & Cập Nhật Kho Vector (Auto-Ingestion & Hot-Reload)
-- **Filesystem Timestamp Tracking**: Phương thức `_check_and_auto_ingest_if_needed()` tự động theo dõi thời gian thay đổi (`st_mtime`) của các file tài liệu trong `data/raw/`.
-- Khi người dùng copy file mới (`.md`, `.txt`, `.pdf`) vào kho, hệ thống tự động phát hiện và kích hoạt nạp vector tức thì mà không cần dừng server hay thao tác thủ công.
-
-### 6. Triệt Tiêu Ảo Giác & Đảm Bảo Đầy Đủ Bảng Biểu (Exhaustive Prompting)
-- Ép LLM (Google Gemini `gemini-flash-latest`) trả lời **nghiêm ngặt và duy nhất** dựa trên khối ngữ cảnh được truy xuất ($K=8$).
-- System instructions yêu cầu AI giữ trọn vẹn 100% tất cả các dòng, các cột và chi tiết số liệu dạng bảng (bán hàng, danh sách khách hàng) mà không tự ý bỏ bớt hay cắt ngắn.
+Dự án cung cấp kiến trúc **hai trong một (Dual-Client Architecture)**:
+1. **Interactive Web Application**: Ứng dụng Web Single Page hoàn chỉnh (SPA) với giao diện Dark Mode cao cấp, quản lý phiên chat đa luồng (Sessions), quản lý tài liệu (Upload/Xóa), nạp vector tự động và hiển thị trích dẫn nguồn trực quan.
+2. **Standalone Embeddable Chat Widget (`widget.js`)**: Thành phần Chat Widget độc lập được viết bằng TypeScript + Vite, đóng gói theo định dạng IIFE (~26 KB) sử dụng **Shadow DOM** để nhúng liền mạch vào bất kỳ trang web nào chỉ với 1 thẻ `<script>` mà không gây xung đột CSS.
 
 ---
 
-## 3. Kiến Trúc Luồng Xử Lý Dữ Liệu (Data Flow Architecture)
+## 2. Kiến Trúc Kỹ Thuật Cốt Lõi
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -63,144 +35,314 @@ Dự án tập trung chuyên sâu vào **Pipeline xử lý dữ liệu (Data Pip
 │                                                                        │               │
 │                                                                        ▼               │
 │                                                            [Vector Store (.npz)]       │
+│                                                            (+ allowed_roles meta)      │
 └────────────────────────────────────────────────────────────────────────┼───────────────┘
                                                                          │
 ┌────────────────────────────────────────────────────────────────────────┼───────────────┐
 │                        QUERY & RETRIEVAL PIPELINE (ONLINE PHASE)       │               │
 │                                                                        ▼               │
 │  [User Query] ──► [Standalone Rewriter] ──► [Query Embedder] ──► [Cosine Search]       │
-│  (+ Chat History)  (Gemini LLM / Heuristic) (E5 Query Format)    (L2 Normalized Dot)   │
+│  (+ Chat History)  (Gemini LLM / Heuristic) (E5 Query Format)    (RBAC Role Filter)    │
 │                                                                        │               │
 │                                                                        ▼               │
 │  [Final Answer] ◄── [Google Gemini LLM] ◄────────────────────── [Top-K Context]        │
-│   (+ Sources)       (System Instructions)                         (Top K=8 Chunks)     │
+│   (Natural Tone)    (Persona Steering)                            (Top K=8 Chunks)     │
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### 1. Nhúng Vector Cục Bộ (Local Multilingual Embeddings)
+- Sử dụng mô hình `intfloat/multilingual-e5-base` (768 chiều) qua thư viện `sentence-transformers`.
+- Chạy **cục bộ 100% trên CPU/GPU**: Không tốn chi phí API, không phụ thuộc mạng bên ngoài cho tác vụ embedding, bảo mật tuyệt đối dữ liệu nội bộ.
+- **Asymmetric Encoding**: Xử lý tiền tố bất đối xứng đặc trưng của dòng E5 (`passage: ` cho tài liệu và `query: ` cho câu hỏi truy vấn) giúp tối ưu hóa không gian biểu diễn vector.
+
+### 2. Tìm Kiếm Vector Tốc Độ Cao Bằng NumPy (Vectorized Cosine Similarity)
+- **Chuẩn hóa L2 (L2 Normalization)**: Tự động chuẩn hóa mọi vector về độ dài $\|V\| = 1$. Khi đó, độ tương đồng Cosine trở thành phép nhân vô hướng (Dot Product):
+  $$\text{Cosine Similarity}(Q, V) = Q \cdot V^T$$
+- **NumPy Matrix Multiplication**: Tận dụng tối đa tập lệnh CPU SIMD để tính toán khoảng cách và xếp hạng Top-$K$ ($K=8$) đoạn tài liệu trong vòng vài miligiây.
+
+### 3. Phân Quyền Truy Cập 2 Lớp (Two-Layer RBAC Architecture)
+Hỗ trợ phân quyền chặt chẽ theo vai trò người dùng (`guest`, `user`, `admin_ops`, `admin_model`):
+- **Lớp 1 — Lọc Vector Cứng (Metadata Filtering):** Hàm tìm kiếm vector chỉ tính toán trên các chunk có `allowed_roles` khớp với quyền của người gọi. Đảm bảo **Zero Data Leakage** — tài liệu quản trị không bao giờ lọt vào ngữ cảnh của người dùng thường hoặc khách vãng lai.
+- **Lớp 2 — Điều Hướng Phong Cách Mềm (Persona Steering):** Tinh chỉnh System Instructions theo từng vai trò: phản hồi tự nhiên, giải thích rõ thẩm quyền và hướng dẫn đăng nhập lịch sự khi có yêu cầu vượt cấp.
+
+### 4. Trí Nhớ Hội Thoại Đa Lượt & Tái Cấu Trúc Câu Hỏi (Conversational Multi-Turn RAG)
+- **Standalone Query Rewriting**: Khi người dùng đặt câu hỏi phụ thuộc ngữ cảnh trước đó (*"nó là gì"*, *"hướng dẫn chi tiết hơn đi"*), hệ thống tự động phân tích lịch sử hội thoại và viết lại thành một câu hỏi độc lập đầy đủ thực thể trước khi truy xuất kho vector.
+- **Tối ưu Hạn ngạch (Quota Optimization)**: Hàm phân tích heuristic `_is_followup_question()` phát hiện chính xác câu hỏi nối tiếp, bỏ qua việc gọi LLM viết lại đối với câu hỏi độc lập rõ nghĩa, giúp tiết kiệm tới 50% số lượt gọi LLM.
+
+### 5. Tự Động Đồng Bộ Dữ Liệu (Auto-Ingestion & Hot-Reload)
+- Theo dõi thời gian thay đổi (`st_mtime`) của các file tài liệu trong thư mục `data/raw/`.
+- Khi có file mới được thêm vào hoặc chỉnh sửa, hệ thống tự động phát hiện và kích hoạt cập nhật lại kho vector mà không cần khởi động lại máy chủ.
+
 ---
 
-## 4. Cấu Trúc Thư Mục Dự Án & Chi Tiết Các Thành Phần
+## 3. Cấu Trúc Thư Mục Dự Án
 
 ```text
 LOCAL-RAG/
-├── .dockerignore             # Danh sách loại trừ các file tạm/venv khi build Docker Image
-├── .env.example              # Mẫu khai báo các biến môi trường (API Key, model parameters)
-├── .gitignore                # Loại trừ các tập tin nhạy cảm (.env) và dữ liệu nhị phân khỏi Git
-├── Dockerfile                # Cấu hình đóng gói Docker Container (nạp sẵn weights E5 model)
-├── docker-compose.yml        # Cấu hình khởi chạy nhanh Docker Compose cùng Volume persistence
-├── pyproject.toml            # Khai báo gói ứng dụng Python (chatntq-rag) và dependencies
-├── requirements.txt          # Danh sách các thư viện Python phụ thuộc cần cài đặt
-├── README.md                 # Tài liệu mô tả kiến trúc và hướng dẫn vận hành dự án
+├── .dockerignore             # Danh sách loại trừ các file tạm khi build Docker Image
+├── .env.example              # Mẫu khai báo các biến môi trường
+├── .gitignore                # Loại trừ .env, node_modules, cache nhị phân khỏi Git
+├── Dockerfile                # Đóng gói Docker Container (nạp sẵn weights E5 model)
+├── docker-compose.yml        # Khởi chạy Docker Compose cùng Volume hot-reload
+├── pyproject.toml            # Cấu hình gói Python và dependencies
+├── package.json              # Quản lý script npm cấp gốc (build:widget)
+├── requirements.txt          # Danh sách thư viện Python
+├── README.md                 # Tài liệu hướng dẫn dự án
 │
-├── data/                     # Quản lý tập trung dữ liệu của hệ thống RAG
-│   ├── raw/                  # Nơi chứa tài liệu thô đầu vào (.txt, .md, .pdf)
-│   │   ├── RAG.md            # Tài liệu tri thức chuẩn về RAG và hướng dẫn dự án
-│   │   └── sales.md          # Tài liệu test dữ liệu bảng biểu bán hàng & tính toán
-│   └── processed/            # Nơi lưu trữ tập tin kho dữ liệu vector store (.npz & .meta.json)
+├── data/                     # Quản lý tập trung dữ liệu RAG
+│   ├── raw/                  # Thư mục chứa tài liệu thô (.txt, .md, .pdf)
+│   └── processed/            # Kho lưu trữ vector store (.npz & .meta.json)
 │
 ├── src/                      # Mã nguồn chính của ứng dụng
-│   ├── api/                  # Tầng Web API & Giao diện Demo minh họa
-│   │   ├── __init__.py       # Đánh dấu package Python cho tầng API
-│   │   ├── main.py           # Khởi tạo FastAPI, CORS, mount file tĩnh & bộ lọc log EndpointFilter
-│   │   ├── routes.py         # Định nghĩa các REST Endpoints (/api/chat, /api/documents, /api/upload...)
-│   │   ├── schemas.py        # Các mô hình Pydantic xác thực dữ liệu đầu vào/đầu ra (kèm ChatMessage)
-│   │   └── static/           # Tài nguyên giao diện Web Single Page Application
-│   │       ├── index.html    # Cấu trúc HTML giao diện Dark Mode kèm Thẻ câu hỏi mẫu
-│   │       ├── css/
-│   │       │   └── style.css # Hệ thống thiết kế CSS (Dark Theme, Glassmorphism, Session List)
-│   │       └── js/
-│   │           └── app.js    # Logic JS phía client (LocalStorage Session Manager, Event Delegation)
+│   ├── api/                  # Tầng Web API & Static Web Demo
+│   │   ├── main.py           # Khởi tạo FastAPI, CORS, Static Files, endpoint /widget.js
+│   │   ├── routes.py         # REST Endpoints (/api/chat, /api/documents, /api/upload...)
+│   │   ├── schemas.py        # Pydantic Schemas định nghĩa Request/Response
+│   │   └── static/           # Giao diện Web SPA tích hợp sẵn
+│   │       ├── index.html    # Giao diện Dark Mode SPA
+│   │       ├── css/style.css # Giao diện thiết kế Glassmorphism
+│   │       ├── js/app.js     # Quản lý phiên chat (Sessions) & Markdown render
+│   │       └── widget.js     # Bundle Chat Widget độc lập (~26 KB)
 │   │
-│   └── rag/                  # Package lõi xử lý quy trình Data & AI RAG Engine
-│       ├── __init__.py       # Đánh dấu package Python và xuất bản lớp RAGPipeline
-│       ├── config.py         # Đọc thiết lập môi trường .env vào đối tượng Settings bất biến
-│       ├── loader.py         # Đọc và trích xuất dữ liệu từ các tập tin .txt, .md và .pdf
-│       ├── chunker.py        # Thuật toán phân đoạn văn bản (chunking) kèm độ chồng lấn (overlap)
-│       ├── embeddings.py     # Quản lý mô hình nhúng vector cục bộ sentence-transformers (E5)
-│       ├── vector_store.py   # Kho lưu trữ vector, chuẩn hóa L2 và thuật toán Cosine Similarity bằng NumPy
-│       ├── llm.py            # Giao diện đóng gói các cuộc gọi API tới Google Gemini LLM
-│       ├── prompts.py        # Thiết kế System Instructions và Prompt Templates kiểm soát ảo giác
-│       └── pipeline.py       # Bộ điều phối chính kết nối Ingest, Auto-reload & Standalone Query Rewriting
+│   └── rag/                  # Package lõi RAG Engine
+│       ├── config.py         # Nạp cấu hình môi trường từ .env
+│       ├── loader.py         # Trích xuất văn bản từ .txt, .md và .pdf
+│       ├── chunker.py        # Phân đoạn văn bản (chunking) kèm độ chồng lấn (overlap)
+│       ├── embeddings.py     # Mô hình nhúng vector cục bộ Multilingual-E5
+│       ├── vector_store.py   # Kho vector, chuẩn hóa L2, Cosine Search & RBAC Filter
+│       ├── llm.py            # Giao tiếp Google Gemini API
+│       ├── prompts.py        # System Prompt Templates, vai trò & kiểm soát ảo giác
+│       └── pipeline.py       # Điều phối Ingest, Auto-reload, Query Rewriting & RBAC
 │
-├── scripts/                  # Các kịch bản khởi chạy dự án
-│   ├── run_web.py            # Script khởi chạy máy chủ Web FastAPI (host=0.0.0.0, port=8000)
-│   ├── ingest.py             # Script dòng lệnh (CLI) nạp tài liệu vào kho vector
-│   └── ask.py                # Script dòng lệnh (CLI) hỏi đáp Multi-turn trong terminal
+├── widget/                   # Mã nguồn TypeScript của Chat Widget độc lập
+│   ├── package.json          # Dependencies (Vite, TypeScript)
+│   ├── tsconfig.json         # Cấu hình TypeScript
+│   ├── vite.config.ts        # Cấu hình build IIFE bundle
+│   └── src/                  # Mã nguồn widget (UI, Styles, Events, Storage)
+│       ├── index.ts          # Controller, User-Scoped localStorage & DOM Lifecycle
+│       ├── styles.ts         # CSS cô lập cho Shadow DOM
+│       ├── types.ts          # Interface TypeScript cho Widget & Role
+│       └── api.ts            # Client gọi API /api/chat
 │
-└── tests/                    # Thư mục kiểm thử tự động
-    ├── test_api.py           # Bộ kiểm thử unit test cho các đường dẫn API Endpoints
-    └── test_smoke.py         # Bộ kiểm thử smoke test cho thuật toán chia chunk và vector search
+├── scripts/                  # Kịch bản khởi chạy dự án
+│   ├── run_web.py            # Chạy máy chủ Web FastAPI (host 0.0.0.0, port 8001)
+│   ├── ingest.py             # CLI nạp tài liệu thủ công vào vector store
+│   └── ask.py                # CLI hỏi đáp trực tiếp trong Terminal
+│
+└── tests/                    # Kiểm thử tự động
+    ├── test_api.py           # Unit tests cho các REST API Endpoints
+    └── test_smoke.py         # Smoke tests cho Chunker và Vector Search
 ```
 
 ---
 
-## 5. Công Nghệ & Thư Viện Sử Dụng
+## 4. Công Nghệ Sử Dụng
 
-| Phân Loại | Thư Viện / Công Nghệ | Công Dụng Chi Tiết |
+| Hạng Mục | Công Nghệ / Thư Viện | Vai Trò & Điểm Nổi Bật |
 | :--- | :--- | :--- |
-| **Ngôn ngữ** | Python 3.10+ | Môi trường phát triển cốt lõi |
-| **Mô hình Embedding** | `sentence-transformers` / `multilingual-e5-base` | Biến đổi văn bản thành vector 768 chiều cục bộ |
-| **Đại số & Vector** | `NumPy` | Tính toán ma trận vector và độ tương đồng Cosine |
-| **LLM Chat** | `google-genai` (Gemini API) | Sinh phản hồi tổng hợp từ ngữ cảnh trích xuất |
-| **Xử lý Tài liệu** | `pypdf`, `pathlib` | Đọc dữ liệu tập tin PDF, Markdown, Text |
-| **Backend API** | `FastAPI`, `Uvicorn` | RESTful API bất đồng bộ kèm bộ lọc log `EndpointFilter` |
-| **Frontend UI** | HTML5, CSS3, JavaScript (Vanilla) | Single Page Application với LocalStorage Session Manager |
-| **Testing** | `pytest` | Kiểm thử tự động thuật toán chia chunk & vector search |
-| **Đóng gói** | `Docker`, `Docker Compose` | Đóng gói ứng dụng Containerized tối ưu hóa weights model |
+| **Ngôn ngữ** | Python 3.10+ & TypeScript | Backend xử lý AI & Client Widget |
+| **Mô hình Embedding** | `sentence-transformers` / `intfloat/multilingual-e5-base` | Nhúng vector 768 chiều cục bộ (Offline 100%) |
+| **Đại số Vector** | `NumPy` | Tính toán ma trận và xếp hạng Cosine Similarity |
+| **LLM Inference** | `google-genai` (Google Gemini Flash) | Sinh câu trả lời tổng hợp có kiểm soát ảo giác |
+| **Web Framework** | `FastAPI`, `Uvicorn` | RESTful API bất đồng bộ hiệu năng cao |
+| **Đóng gói Widget** | `Vite` (IIFE Output) | Bundle độc lập ~26 KB, tự đóng gói CSS trong Shadow DOM |
+| **Xử lý Tài liệu** | `pypdf`, `pathlib` | Đọc văn bản từ PDF, Markdown, Plain Text |
+| **Testing** | `pytest` | Kiểm thử tự động thuật toán chia đoạn và Vector Search |
+| **Triển khai** | `Docker`, `Docker Compose` | Container đóng gói sẵn weights mô hình E5 |
 
 ---
 
-## 6. Hướng Dẫn Cài Đặt & Chạy Trên Máy Cục Bộ
+## 5. Hướng Dẫn Cài Đặt & Khởi Chạy
 
-### Bước 6.1 — Khởi Tạo Môi Trường Ảo
+### Bước 1 — Khởi Tạo Môi Trường Python
 
 ```powershell
+# Tạo môi trường ảo
 python -m venv .venv
+
+# Kích hoạt môi trường (Windows PowerShell)
 .\.venv\Scripts\Activate.ps1
+
+# Kích hoạt môi trường (Linux / macOS)
+# source .venv/bin/activate
 ```
 
-### Bước 6.2 — Cài Đặt Thư Viện Phụ Thuộc
+### Bước 2 — Cài Đặt Thư Viện Phụ Thuộc
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-### Bước 6.3 — Cấu Hình API Key
+### Bước 3 — Thiết Lập Biến Môi Trường
 
-Sao chép `.env.example` thành `.env` và điền `GEMINI_API_KEY`:
+Sao chép `.env.example` thành `.env`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Mở file `.env` và điền `GEMINI_API_KEY` (lấy miễn phí tại [Google AI Studio](https://aistudio.google.com/apikey)):
 
 ```env
-GEMINI_API_KEY=dán_api_key_của_bạn_vào_đây
+GEMINI_API_KEY=AIzaSy...
 GEMINI_CHAT_MODEL=gemini-flash-latest
 EMBED_MODEL=intfloat/multilingual-e5-base
 RAG_CHUNK_SIZE=800
 RAG_CHUNK_OVERLAP=120
 RAG_TOP_K=8
+PORT=8001
+CORS_ORIGINS=*
 ```
 
-### Bước 6.4 — Chạy Demo Kiểm Thử
+### Bước 4 — Khởi Chạy Hệ Thống
 
-#### Cách A: Mở Giao diện Demo Web (Interactive UI Demo)
+#### Cách 1: Khởi Chạy Giao Diện Web FastAPI (Interactive Web Demo)
 ```powershell
 python scripts/run_web.py
 ```
-*Trình duyệt sẽ mở `http://127.0.0.1:8000` để bạn trải nghiệm thử nghiệm đặt câu hỏi.*
+- Máy chủ sẽ chạy tại: `http://localhost:8001`.
+- Mở trình duyệt để trải nghiệm ứng dụng Web SPA đầy đủ tính năng: Chat đa lượt, Upload tài liệu, Nạp Vector Store, Xem tài liệu trích dẫn.
 
-#### Cách B: Chạy Nạp Data & Thử Nghiệm Qua CLI (Terminal)
-Nạp dữ liệu tài liệu thô trong `data/raw/`:
+#### Cách 2: Hỏi Đáp Trực Tiếp Qua Terminal (CLI)
 ```powershell
+# 1. Nạp tài liệu trong data/raw/
 python scripts/ingest.py
-```
-Đặt câu hỏi trực tiếp:
-```powershell
-python scripts/ask.py "RAG khác Fine-tuning như thế nào?"
+
+# 2. Đặt câu hỏi
+python scripts/ask.py "Quy trình xử lý khi phát hiện đám cháy là gì?"
 ```
 
 ---
 
-## 7. Kiểm Thử Tự Động (Automated Testing)
+## 6. Đóng Gói & Tích Hợp Chat Widget Độc Lập (`widget.js`)
 
-Chạy pytest để kiểm tra độ chính xác của các thuật toán xử lý dữ liệu và vector search:
+Chat Widget được thiết kế để nhúng vào **bất kỳ ứng dụng web nào** (React, Vue, Angular, WordPress, Web tĩnh HTML) với độ tương thích tuyệt đối.
+
+### 1. Biên Dịch Mã Nguồn Widget
+Khi có chỉnh sửa trong thư mục `widget/src/`, biên dịch lại widget bằng lệnh:
+
+```powershell
+npm run build:widget
+```
+*File kết quả sẽ được xuất tự động ra `src/api/static/widget.js`.*
+
+### 2. Nhúng Vào Trang Web Bất Kỳ
+Chỉ cần thêm thẻ `<script>` vào trang web đích trước thẻ đóng `</body>`:
+
+```html
+<!-- Cấu hình tùy chọn (nếu có) -->
+<script>
+  window.FlareChatWidgetConfig = {
+    apiUrl: "http://localhost:8001/api",
+    role: "guest"
+  };
+</script>
+
+<!-- Nhúng Chat Widget -->
+<script src="http://localhost:8001/widget.js" defer></script>
+```
+
+### 3. Điều Khiển Widget Qua JavaScript API
+Widget cung cấp API toàn cục thông qua `window.FlareChatWidget`:
+
+```javascript
+// Đổi vai trò và phân vùng lưu trữ lịch sử theo tài khoản
+window.FlareChatWidget.setRole("user", "user_12345");
+
+// Chuyển về chế độ khách khi đăng xuất (tự làm sạch lịch sử phiên trước)
+window.FlareChatWidget.setRole("guest", null);
+
+// Mở, đóng hoặc toggle khung chat
+window.FlareChatWidget.open();
+window.FlareChatWidget.close();
+window.FlareChatWidget.toggle();
+
+// Xóa sạch lịch sử chat của phiên hiện tại
+window.FlareChatWidget.clear();
+```
+
+### 4. Cơ Chế Quản Lý Lịch Sử Theo Người Dùng (User-Scoped Storage)
+- **Khách vãng lai (`guest`):** Không lưu vào `localStorage`. Lịch sử chỉ lưu trong RAM/DOM của phiên hiện tại. Khi người dùng tải lại trang (F5) hoặc Đăng xuất, khung chat tự động xóa trắng về trạng thái ban đầu.
+- **Tài khoản đã đăng nhập (`user`, `admin_ops`, `admin_model`):** Lưu trữ độc lập vào `localStorage` theo khóa `flare_chat_history_${userId}` (tối đa 20 tin nhắn gần nhất). Đảm bảo cách ly 100% dữ liệu trò chuyện giữa các tài khoản khác nhau trên cùng một trình duyệt.
+
+---
+
+## 7. Tài Liệu REST API
+
+FastAPI cung cấp tài liệu Swagger UI trực quan tại: `http://localhost:8001/docs`.
+
+### 1. `POST /api/chat`
+Gửi câu hỏi và lịch sử trò chuyện để nhận câu trả lời từ RAG Pipeline.
+
+**Request Body:**
+```json
+{
+  "question": "Cách sử dụng bình chữa cháy bột và CO2 khác nhau thế nào?",
+  "history": [
+    { "role": "user", "content": "Xin chào" },
+    { "role": "assistant", "content": "Chào bạn! Mình có thể hỗ trợ gì cho bạn?" }
+  ],
+  "role": "user"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "answer": "Bình chữa cháy dạng bột có đồng hồ áp suất ở cổ bình, dùng dập tắt đám cháy chất rắn, lỏng, khí và điện hạ thế...",
+  "sources": [
+    {
+      "source": "ky-nang-pccc-va-thoat-hiem.md",
+      "text": "Theo TCVN 3890:2023, hai loại bình chữa cháy xách tay phổ biến...",
+      "score": 0.884
+    }
+  ]
+}
+```
+
+### 2. `GET /api/documents`
+Lấy danh sách các file tài liệu hiện có trong thư mục `data/raw/`.
+
+### 3. `POST /api/upload`
+Tải file tài liệu mới (`.txt`, `.md`, `.pdf`) lên `data/raw/` và tự động kích hoạt nạp lại kho vector. Tích hợp kiểm tra chuẩn hóa tên file và giới hạn dung lượng tối đa 25MB.
+
+### 4. `DELETE /api/documents/{filename}`
+Xóa tài liệu khỏi `data/raw/` và tự động cập nhật lại kho vector. Tích hợp cơ chế chống tấn công Path Traversal.
+
+### 5. `POST /api/ingest`
+Kích hoạt tiến trình nạp (ingestion) toàn bộ tài liệu từ `data/raw/` vào kho vector.
+
+### 6. `GET /api/health`
+Kiểm tra trạng thái máy chủ, trạng thái kho vector và tên mô hình đang hoạt động.
+
+### 7. `GET /widget.js`
+Cung cấp trực tiếp file bundle widget độc lập phục vụ nhúng script từ bên ngoài kèm header `Cache-Control: no-cache`.
+
+---
+
+## 8. Triển Khai Với Docker
+
+Dự án đã được container hóa hoàn chỉnh với Dockerfile tối ưu hóa dung lượng (Python 3.11-slim) và nạp sẵn trọng số của mô hình E5 vào Docker Cache giúp container khởi động tức thì.
+
+### Khởi Chạy Bằng Docker Compose (Khuyên Dùng)
+
+```bash
+docker-compose up --build
+```
+- Khởi chạy ở chế độ chạy ngầm (Background):
+  ```bash
+  docker-compose up -d --build
+  ```
+- Dừng dịch vụ:
+  ```bash
+  docker-compose down
+  ```
+
+---
+
+## 9. Kiểm Thử Tự Động (Automated Testing)
+
+Chạy bộ kiểm thử tự động với `pytest` để kiểm tra toàn bộ pipeline:
 
 ```powershell
 pytest
@@ -208,31 +350,9 @@ pytest
 
 ---
 
-## 8. Đóng Gói & Triển Khai Docker (Containerization & Deployment)
+## 10. Lưu Ý Về An Toàn & Bảo Mật Khi Đưa Vào Vận Hành
 
-Dự án đã được hoàn thiện đóng gói Docker Image tối ưu hóa dung lượng (Python 3.11-slim) và nạp sẵn weights mô hình embedding để khởi động cực nhanh trên mọi môi trường Server/Cloud.
-
-### Cách A — Khởi chạy & Theo dõi trực tiếp bằng Docker Compose (Khuyên dùng)
-
-```bash
-docker-compose up --build
-```
-- *Trình duyệt truy cập giao diện Web UI tại: `http://localhost:8000`.*
-- *Dòng Log nhật ký sẽ hiển thị trực tiếp trên Terminal.*
-- *Khi muốn dừng máy chủ, chỉ cần bấm **`Ctrl + C`**.*
-
-### Cách B — Khởi chạy ở chế độ chạy ngầm (Background Mode)
-
-```bash
-docker-compose up -d --build
-```
-
-### Cách C — Build & Run thủ công bằng Docker CLI
-
-```bash
-# 1. Build Docker Image
-docker build -t chatntq-rag .
-
-# 2. Khởi chạy Docker Container
-docker run -p 8000:8000 --env-file .env -v ${PWD}/data/raw:/app/data/raw --name chatntq_rag_app chatntq-rag
-```
+1. **Bảo Mật API Key**: Tuyệt đối không commit file `.env` chứa `GEMINI_API_KEY` lên các kho mã nguồn công khai (GitHub/GitLab). File `.gitignore` của dự án đã được cấu hình sẵn để chặn `.env` và `node_modules/`.
+2. **Xác Thực Vai Trò (Production RBAC)**: Khi triển khai vào hệ thống thực tế, tham số `role` của endpoint `/api/chat` nên được xác thực qua **JWT Bearer Token** hoặc Session Cookie từ dịch vụ Auth thay vì nhận tham số trần từ client.
+3. **CORS Origins**: Trong môi trường Production, cấu hình biến `CORS_ORIGINS` trong `.env` thành danh sách domain cụ thể (ví dụ: `https://mywebsite.com,https://app.mywebsite.com`) thay vì để `*`.
+4. **An Toàn Thao Tác File**: Các endpoint Upload và Delete file đã được tích hợp bộ lọc chống tấn công **Directory Traversal** (`Path.name`, kiểm tra `resolve()`) và giới hạn kích thước file chống tấn công cạn kiệt bộ nhớ (DoS).

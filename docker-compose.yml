@@ -5,17 +5,19 @@ services:
       dockerfile: Dockerfile
     container_name: chatntq_rag_app
     ports:
-      - "8000:8000"
+      - "8001:8001"
     env_file:
       - .env
     volumes:
+      # Gắn volume mã nguồn src để cập nhật ngay lập tức các thay đổi code & widget.js mà không cần rebuild container
+      - ./src:/app/src
       # Gắn volume thư mục data/raw để đồng bộ dữ liệu tài liệu từ máy chủ Host vào Container
       - ./data/raw:/app/data/raw
       # Gắn volume lưu trữ kho vector store giúp duy trì dữ liệu sau mỗi lần khởi động lại
       - ./data/processed:/app/data/processed
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/api/health || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 3

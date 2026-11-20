@@ -45,7 +45,9 @@ def chat_query(
     """Gửi câu hỏi tới RAG Pipeline và nhận câu trả lời kèm nguồn trích dẫn."""
     try:
         history_dicts = [msg.model_dump() for msg in request.history]
-        res = pipeline.answer(request.question, history=history_dicts)
+        res = pipeline.answer(
+            request.question, history=history_dicts, role=request.role
+        )
         sources = [
             SourceItem(source=s.source, text=s.text, score=s.score)
             for s in res.sources
@@ -101,11 +103,33 @@ async def upload_document(
             detail=f"Định dạng file '{file_ext}' không được hỗ trợ. Chỉ chấp nhận: {', '.join(ALLOWED_EXTENSIONS)}",
         )
 
+    # Lọc và chuẩn hóa tên file để chống Path Traversal
+    safe_filename = Path(file.filename).name
+    if not safe_filename or safe_filename.startswith("."):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tên file không hợp lệ.",
+        )
+
     raw_dir = pipeline.settings.raw_dir
     raw_dir.mkdir(parents=True, exist_ok=True)
 
-    dest_path = raw_dir / file.filename
-    content = await file.read()
+    dest_path = (raw_dir / safe_filename).resolve()
+    if not str(dest_path).startswith(str(raw_dir.resolve())):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Đường dẫn lưu file không hợp lệ.",
+        )
+
+    # Giới hạn kích thước file tải lên (tối đa 25MB) để chống cạn kiệt bộ nhớ (DoS)
+    MAX_FILE_SIZE = 25 * 1024 * 1024  # 25MB
+    content = await file.read(MAX_FILE_SIZE + 1)
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Dung lượng file vượt quá giới hạn cho phép (tối đa 25MB).",
+        )
+
     dest_path.write_bytes(content)
 
     # Tự động nạp lại vector store

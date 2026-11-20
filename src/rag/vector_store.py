@@ -41,26 +41,47 @@ class VectorStore:
         """Khởi tạo kho chứa vector mới và thực hiện chuẩn hóa dữ liệu đầu vào."""
         return cls(cls._normalize(vectors.astype(np.float32)), metadatas)
 
-    def search(self, query_vector: np.ndarray, top_k: int) -> list[SearchResult]:
-        """Tìm kiếm top_k đoạn văn bản có độ tương đồng cosine cao nhất."""
+    def search(
+        self, query_vector: np.ndarray, top_k: int, allowed_role: str | None = None
+    ) -> list[SearchResult]:
+        """Tìm kiếm top_k đoạn văn bản có độ tương đồng cosine cao nhất, hỗ trợ lọc theo quyền vai trò."""
         if not self._metadatas:
+            return []
+
+        # Chuẩn hóa vai trò người dùng (ví dụ: 'admin' tương đương 'admin_ops')
+        user_role = (allowed_role or "guest").lower().strip()
+        if user_role == "admin":
+            user_role = "admin_ops"
+
+        # Lọc danh sách chỉ mục chunk mà vai trò này được phép truy cập
+        valid_indices = []
+        for i, meta in enumerate(self._metadatas):
+            roles = meta.get("allowed_roles")
+            if roles is None or user_role in roles or "all" in roles:
+                valid_indices.append(i)
+
+        if not valid_indices:
             return []
 
         q = query_vector.astype(np.float32)
         q = q / (np.linalg.norm(q) + 1e-12)
 
-        # Tính toán điểm cosine similarity bằng tích vô hướng
-        scores = self._vectors @ q
-        top_idx = np.argsort(-scores)[:top_k]
+        # Tính toán điểm cosine similarity
+        all_scores = self._vectors @ q
+        valid_scores = all_scores[valid_indices]
+
+        # Lấy top_k trong các chunk được phép
+        top_local_idx = np.argsort(-valid_scores)[:top_k]
 
         results: list[SearchResult] = []
-        for i in top_idx:
-            meta = self._metadatas[int(i)]
+        for local_i in top_local_idx:
+            orig_i = valid_indices[int(local_i)]
+            meta = self._metadatas[orig_i]
             results.append(
                 SearchResult(
                     text=meta["text"],
                     source=meta["source"],
-                    score=float(scores[i]),
+                    score=float(all_scores[orig_i]),
                 )
             )
         return results

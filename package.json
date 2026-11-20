@@ -1,0 +1,9 @@
+{
+  "name": "chatntq-rag-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:widget": "npm --prefix widget run build:widget",
+    "dev:widget": "npm --prefix widget run dev"
+  }
+}
