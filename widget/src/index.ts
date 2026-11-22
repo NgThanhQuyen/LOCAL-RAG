@@ -39,6 +39,7 @@ const ROLE_CONFIGS: Record<
     subtitle: "Người dùng hệ thống",
     greeting: "Chào bạn! Bạn cần hỗ trợ gì về sử dụng FLARE hoặc an toàn PCCC? 😊",
     quickPrompts: [
+      "📷 Cách biến điện thoại thành camera giám sát",
       "📱 Hướng dẫn kết nối Bot Zalo nhận cảnh báo",
       "📹 Cách bật webcam laptop phát hiện cháy",
       "❓ Cách gửi phản hồi khi hệ thống nhận diện sai",
@@ -166,6 +167,36 @@ function detectApiUrl(): string {
   return "http://localhost:8001/api";
 }
 
+function detectMascotUrl(): string {
+  if ((window.FlareChatWidgetConfig as any)?.mascotUrl) {
+    return (window.FlareChatWidgetConfig as any).mascotUrl;
+  }
+
+  const scripts = document.querySelectorAll("script");
+  for (let i = 0; i < scripts.length; i++) {
+    const src = scripts[i].src || "";
+    if (src.includes("widget.js")) {
+      try {
+        const u = new URL(src);
+        return `${u.origin}/mascot_flare.webm`;
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  if (window.FlareChatWidgetConfig?.apiUrl) {
+    try {
+      const u = new URL(window.FlareChatWidgetConfig.apiUrl);
+      return `${u.origin}/mascot_flare.webm`;
+    } catch {
+      // ignore
+    }
+  }
+
+  return "/mascot_flare.webm";
+}
+
 let widgetInstance: FlareChatWidgetController | null = null;
 
 class FlareChatWidgetController {
@@ -177,6 +208,11 @@ class FlareChatWidgetController {
   private isLoading = false;
   private currentRole: UserRole = "guest";
   private currentUserId: string | null = null;
+  private mascotUrl: string = "";
+  private mascotLauncherElem: HTMLElement | null = null;
+  private mascotGreetingElem: HTMLElement | null = null;
+  private mascotPillsElem: HTMLElement | null = null;
+  private isMascotCollapsed = false;
   private history: ChatMessage[] = [];
   private messagesContainer: HTMLElement | null = null;
   private inputElem: HTMLTextAreaElement | null = null;
@@ -194,9 +230,11 @@ class FlareChatWidgetController {
     if (this.currentRole === "guest") this.currentUserId = null;
 
     const roleInfo = ROLE_CONFIGS[this.currentRole] || ROLE_CONFIGS.guest;
+    this.mascotUrl = (customConfig as any)?.mascotUrl || (window.FlareChatWidgetConfig as any)?.mascotUrl || detectMascotUrl();
 
     this.config = {
       apiUrl: detectApiUrl(),
+      mascotUrl: this.mascotUrl,
       title: "Flare AI",
       subtitle: roleInfo.subtitle,
       placeholder: "Hỏi Flare AI...",
@@ -207,6 +245,13 @@ class FlareChatWidgetController {
 
     this.mount();
     widgetInstance = this;
+  }
+
+  private getAvatarHtml(): string {
+    if (this.mascotUrl) {
+      return `<video class="flare-avatar-mascot-video" src="${this.mascotUrl}" autoplay loop muted playsinline></video>`;
+    }
+    return FLAME_SVG;
   }
 
   private normalizeRole(role: string): UserRole {
@@ -283,6 +328,15 @@ class FlareChatWidgetController {
     if (this.subtitleElem) {
       this.subtitleElem.textContent = roleInfo.subtitle;
     }
+    if (this.mascotGreetingElem) {
+      this.mascotGreetingElem.textContent = roleInfo.greeting;
+    }
+    if (this.mascotPillsElem) {
+      this.mascotPillsElem.innerHTML = roleInfo.quickPrompts
+        .map((p) => `<button class="flare-mascot-pill" data-prompt="${p}">${p}</button>`)
+        .join("");
+      this.bindMascotPills();
+    }
 
     if (isChanged) {
       this.loadHistory();
@@ -293,9 +347,10 @@ class FlareChatWidgetController {
     if (widgetInstance) {
       widgetInstance.setRole(newRole, newUserId);
     } else {
+      const normalized = (newRole || "").toLowerCase().trim() as UserRole;
       window.FlareChatWidgetConfig = {
         ...window.FlareChatWidgetConfig,
-        role: newRole,
+        role: normalized,
         userId: newRole === "guest" ? null : (newUserId ? String(newUserId) : null),
       };
     }
@@ -334,8 +389,7 @@ class FlareChatWidgetController {
     if (this.isOpen) return;
     this.isOpen = true;
     this.windowElem?.classList.add("active");
-    this.fabBtn?.classList.add("open");
-    this.fabBadge?.classList.add("hidden");
+    this.mascotLauncherElem?.classList.add("hidden");
     setTimeout(() => {
       this.inputElem?.focus();
       this.scrollToBottom();
@@ -346,8 +400,7 @@ class FlareChatWidgetController {
     if (!this.isOpen) return;
     this.isOpen = false;
     this.windowElem?.classList.remove("active");
-    this.fabBtn?.classList.remove("open");
-    this.fabBadge?.classList.remove("hidden");
+    this.mascotLauncherElem?.classList.remove("hidden");
   }
 
   public toggle() {
@@ -403,20 +456,47 @@ class FlareChatWidgetController {
     // Main Wrapper
     const wrapper = document.createElement("div");
     wrapper.innerHTML = `
-      <!-- Tooltip Badge Gọi Mời Nhận Diện Chatbot -->
-      <div class="flare-fab-badge" id="flare-fab-badge" title="Bấm để trò chuyện cùng Flare AI">
-        <span class="flare-badge-icon">🔥</span>
-        <span>Hỏi Flare AI</span>
-      </div>
+      <!-- Mascot Launcher Nổi Bật Ở Góc Phải (Theo Hình Mẫu) -->
+      <div class="flare-mascot-launcher" id="flare-mascot-launcher">
+        <!-- 1. Hộp Lời Chào Nổi -->
+        <div class="flare-mascot-bubble" id="flare-mascot-bubble" title="Bấm để mở chat cùng Flare AI">
+          <div class="flare-bubble-header">
+            <div class="flare-bubble-avatar">
+              ${this.getAvatarHtml()}
+            </div>
+            <div class="flare-bubble-title">
+              <span>Flare AI</span>
+              <span class="flare-status-dot"></span>
+            </div>
+          </div>
+          <div class="flare-bubble-text" id="flare-mascot-greeting-text">
+            ${roleInfo.greeting}
+          </div>
+        </div>
 
-      <!-- Nút Tròn Nổi FAB với Icon Ngọn Lửa -->
-      <button class="flare-fab" id="flare-fab" title="Trợ lý Flare AI">
-        <div class="flare-fab-pulse"></div>
-        ${FLAME_SVG}
-        <svg class="icon-close" viewBox="0 0 24 24">
-          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-        </svg>
-      </button>
+        <!-- 2. Danh Sách Câu Hỏi Nhanh Xếp Dọc Nổi Lơ Lửng -->
+        <div class="flare-mascot-pills" id="flare-mascot-pills">
+          ${roleInfo.quickPrompts.map((p) => `<button class="flare-mascot-pill" data-prompt="${p}">${p}</button>`).join("")}
+        </div>
+
+        <!-- 3. Chú Mascot Ngọn Lửa Chuyển Động & Nút Thu Nhỏ -->
+        <div class="flare-mascot-character-wrapper">
+          <button class="flare-mascot-toggle-btn" id="flare-mascot-toggle-btn" title="Thu nhỏ / Mở rộng gợi ý">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+          </button>
+          <div class="flare-mascot-character" id="flare-mascot-character" title="Bấm để trò chuyện cùng Flare AI">
+            <div class="flare-mascot-glow"></div>
+            <video
+              class="flare-mascot-video"
+              src="${this.mascotUrl}"
+              autoplay
+              loop
+              muted
+              playsinline
+            ></video>
+          </div>
+        </div>
+      </div>
 
       <!-- Khung Cửa Sổ Chatbot -->
       <div class="flare-window" id="flare-window">
@@ -424,7 +504,7 @@ class FlareChatWidgetController {
         <div class="flare-header">
           <div class="flare-header-left">
             <div class="flare-header-avatar">
-              ${FLAME_SVG}
+              ${this.getAvatarHtml()}
             </div>
             <div>
               <div class="flare-header-title">${this.config.title}</div>
@@ -486,8 +566,9 @@ class FlareChatWidgetController {
     this.shadow.appendChild(wrapper);
 
     // Cache elements
-    this.fabBtn = this.shadow.getElementById("flare-fab") as HTMLButtonElement;
-    this.fabBadge = this.shadow.getElementById("flare-fab-badge");
+    this.mascotLauncherElem = this.shadow.getElementById("flare-mascot-launcher");
+    this.mascotGreetingElem = this.shadow.getElementById("flare-mascot-greeting-text");
+    this.mascotPillsElem = this.shadow.getElementById("flare-mascot-pills");
     this.windowElem = this.shadow.getElementById("flare-window");
     this.messagesContainer = this.shadow.getElementById("flare-messages");
     this.inputElem = this.shadow.getElementById("flare-input") as HTMLTextAreaElement;
@@ -508,7 +589,7 @@ class FlareChatWidgetController {
     const msg1 = document.createElement("div");
     msg1.className = "flare-msg assistant";
     msg1.innerHTML = `
-      <div class="flare-msg-avatar">${FLAME_SVG}</div>
+      <div class="flare-msg-avatar">${this.getAvatarHtml()}</div>
       <div class="flare-msg-bubble">
         <p>Xin chào, mình là trợ lý ảo <strong>Flare AI</strong> 👋</p>
       </div>
@@ -519,7 +600,7 @@ class FlareChatWidgetController {
     const msg2 = document.createElement("div");
     msg2.className = "flare-msg assistant";
     msg2.innerHTML = `
-      <div class="flare-msg-avatar" style="visibility: hidden;">${FLAME_SVG}</div>
+      <div class="flare-msg-avatar" style="visibility: hidden;">${this.getAvatarHtml()}</div>
       <div class="flare-msg-bubble">
         <p>${roleInfo.greeting}</p>
       </div>
@@ -547,7 +628,169 @@ class FlareChatWidgetController {
     this.scrollToBottom();
   }
 
+  private bindMascotPills() {
+    if (!this.mascotPillsElem) return;
+    this.mascotPillsElem.querySelectorAll(".flare-mascot-pill").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const prompt = btn.getAttribute("data-prompt");
+        if (prompt) {
+          this.open();
+          this.handleSend(prompt);
+        }
+      });
+    });
+  }
+
+  private setupMascotDrag() {
+    const launcher = this.mascotLauncherElem;
+    const mascotChar = this.shadow?.getElementById("flare-mascot-character");
+    if (!launcher || !mascotChar) return;
+
+    // Khôi phục vị trí đã lưu từ localStorage (neo theo bottom và left)
+    try {
+      const saved = localStorage.getItem("flare_mascot_pos");
+      if (saved) {
+        const pos = JSON.parse(saved);
+        if (typeof pos.bottom === "number" && typeof pos.left === "number") {
+          const clampedX = Math.max(16, Math.min(window.innerWidth - 150, pos.left));
+          const clampedY = Math.max(16, Math.min(window.innerHeight - 150, pos.bottom));
+          launcher.style.left = `${clampedX}px`;
+          launcher.style.bottom = `${clampedY}px`;
+          launcher.style.right = "auto";
+          launcher.style.top = "auto";
+          if (clampedX < window.innerWidth / 2) {
+            launcher.classList.add("is-left");
+          } else {
+            launcher.classList.remove("is-left");
+          }
+        } else {
+          localStorage.removeItem("flare_mascot_pos");
+        }
+      }
+    } catch {
+      // bỏ qua lỗi đọc localStorage
+    }
+
+    let isDragging = false;
+    let hasMoved = false;
+    let startX = 0;
+    let startY = 0;
+    let initLeft = 0;
+    let initBottom = 0;
+
+    const onStart = (e: MouseEvent | TouchEvent) => {
+      if ("button" in e && e.button !== 0) return; // Chỉ bắt chuột trái
+      isDragging = true;
+      hasMoved = false;
+
+      const clientX = "clientX" in e ? e.clientX : e.touches[0].clientX;
+      const clientY = "clientY" in e ? e.clientY : e.touches[0].clientY;
+      startX = clientX;
+      startY = clientY;
+
+      const rect = launcher.getBoundingClientRect();
+      initLeft = rect.left;
+      initBottom = window.innerHeight - rect.bottom;
+
+      launcher.style.transition = "none";
+      mascotChar.classList.add("is-dragging");
+
+      window.addEventListener("mousemove", onMove, { passive: false });
+      window.addEventListener("mouseup", onEnd);
+      window.addEventListener("touchmove", onMove, { passive: false });
+      window.addEventListener("touchend", onEnd);
+    };
+
+    const onMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDragging) return;
+      const clientX = "clientX" in e ? e.clientX : e.touches[0].clientX;
+      const clientY = "clientY" in e ? e.clientY : e.touches[0].clientY;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+
+      if (!hasMoved && Math.hypot(dx, dy) > 4) {
+        hasMoved = true;
+      }
+
+      if (hasMoved) {
+        if (e.cancelable) e.preventDefault();
+        const rect = launcher.getBoundingClientRect();
+        const width = rect.width || 140;
+        const height = rect.height || 140;
+        const minX = 16;
+        const maxX = Math.max(minX, window.innerWidth - width - 16);
+        const minY = 16;
+        const maxY = Math.max(minY, window.innerHeight - height - 16);
+
+        const newLeft = Math.max(minX, Math.min(maxX, initLeft + dx));
+        const newBottom = Math.max(minY, Math.min(maxY, initBottom - dy));
+
+        launcher.style.left = `${newLeft}px`;
+        launcher.style.bottom = `${newBottom}px`;
+        launcher.style.right = "auto";
+        launcher.style.top = "auto";
+
+        if (newLeft < window.innerWidth / 2) {
+          launcher.classList.add("is-left");
+        } else {
+          launcher.classList.remove("is-left");
+        }
+      }
+    };
+
+    const onEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      mascotChar.classList.remove("is-dragging");
+      launcher.style.transition = "";
+
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+
+      if (hasMoved) {
+        try {
+          const rect = launcher.getBoundingClientRect();
+          const curBottom = window.innerHeight - rect.bottom;
+          localStorage.setItem(
+            "flare_mascot_pos",
+            JSON.stringify({
+              left: Math.round(rect.left),
+              bottom: Math.round(Math.max(16, curBottom)),
+            })
+          );
+        } catch {
+          // ignore
+        }
+      } else {
+        // Nhấn chuột mà không kéo -> Mở cửa sổ chat
+        this.open();
+      }
+    };
+
+    mascotChar.addEventListener("mousedown", onStart as EventListener);
+    mascotChar.addEventListener("touchstart", onStart as EventListener, { passive: true });
+  }
+
   private bindEvents() {
+    this.setupMascotDrag();
+    this.shadow?.getElementById("flare-mascot-bubble")?.addEventListener("click", () => this.open());
+
+    const toggleBtn = this.shadow?.getElementById("flare-mascot-toggle-btn");
+    toggleBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.isMascotCollapsed = !this.isMascotCollapsed;
+      if (this.isMascotCollapsed) {
+        this.mascotLauncherElem?.classList.add("collapsed");
+      } else {
+        this.mascotLauncherElem?.classList.remove("collapsed");
+      }
+    });
+
+    this.bindMascotPills();
+
     this.fabBtn?.addEventListener("click", () => this.toggle());
     this.fabBadge?.addEventListener("click", () => this.open());
 
@@ -661,7 +904,7 @@ class FlareChatWidgetController {
 
     msg.innerHTML = `
       <div class="flare-msg-avatar">
-        ${FLAME_SVG}
+        ${this.getAvatarHtml()}
       </div>
       <div class="flare-msg-bubble">
         ${parseSimpleMarkdown(text)}

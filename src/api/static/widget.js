@@ -1,4 +1,4 @@
-var E=Object.defineProperty;var k=(p,o,l)=>o in p?E(p,o,{enumerable:!0,configurable:!0,writable:!0,value:l}):p[o]=l;var n=(p,o,l)=>k(p,typeof o!="symbol"?o+"":o,l);this.FlareChatWidget=function(){"use strict";const p=`
+var N=Object.defineProperty;var P=(v,m,E)=>m in v?N(v,m,{enumerable:!0,configurable:!0,writable:!0,value:E}):v[m]=E;var l=(v,m,E)=>P(v,typeof m!="symbol"?m+"":m,E);this.FlareChatWidget=function(){"use strict";const v=`
 :host {
   --flare-primary: #ff5722;
   --flare-primary-hover: #f4511e;
@@ -24,127 +24,268 @@ var E=Object.defineProperty;var k=(p,o,l)=>o in p?E(p,o,{enumerable:!0,configura
   padding: 0;
 }
 
-/* Tooltip Badge "🔥 Hỏi Flare AI" */
-.flare-fab-badge {
+/* Tooltip Badge & Nút Tròn (Ẩn khi có Mascot Launcher) */
+.flare-fab-badge, .flare-fab {
+  display: none !important;
+}
+
+/* Mascot Launcher Container nổi ở góc dưới bên phải */
+.flare-mascot-launcher {
   position: fixed;
-  bottom: 30px;
-  right: 92px;
-  background: var(--flare-bg-panel);
-  color: var(--flare-text);
-  border: 1px solid rgba(255, 87, 34, 0.5);
-  padding: 9px 16px;
-  border-radius: 30px;
-  font-size: 13.5px;
-  font-weight: 500;
+  bottom: 16px;
+  right: 20px;
+  z-index: 2147483646;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.flare-mascot-launcher.hidden {
+  opacity: 0;
+  transform: translateY(20px) scale(0.9);
+  pointer-events: none !important;
+}
+
+.flare-mascot-launcher.is-left {
+  align-items: flex-start;
+}
+
+.flare-mascot-launcher.is-left .flare-mascot-bubble {
+  border-radius: 18px 18px 18px 4px;
+}
+
+.flare-mascot-launcher.is-left .flare-mascot-pills {
+  align-items: flex-start;
+}
+
+/* Thẻ bong bóng lời chào nổi (Floating Greeting Bubble) */
+.flare-mascot-bubble {
+  pointer-events: auto;
+  background: rgba(22, 27, 34, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 87, 34, 0.45);
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  max-width: 290px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 16px rgba(255, 87, 34, 0.25);
+  animation: mascot-float 3.8s ease-in-out infinite;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flare-mascot-bubble:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--flare-primary);
+  box-shadow: 0 16px 36px rgba(255, 87, 34, 0.4);
+}
+
+.flare-bubble-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 87, 34, 0.3);
-  cursor: pointer;
-  z-index: 2147483647;
-  white-space: nowrap;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: badge-float 3s ease-in-out infinite;
+  margin-bottom: 6px;
 }
 
-.flare-fab-badge:hover {
-  transform: translateY(-2px) scale(1.04);
-  border-color: var(--flare-primary);
-  box-shadow: 0 8px 26px rgba(255, 87, 34, 0.5);
-}
-
-.flare-fab-badge.hidden {
-  opacity: 0;
-  transform: translateX(14px) scale(0.85);
-  pointer-events: none;
-}
-
-.flare-badge-icon {
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  animation: flame-flicker 1.8s infinite ease-in-out;
-}
-
-@keyframes badge-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-@keyframes flame-flicker {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.15) rotate(4deg); }
-}
-
-/* Nút bấm tròn hình Ngọn lửa (FAB) */
-.flare-fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
-  color: #ffffff;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 8px 28px rgba(255, 87, 34, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.2);
+.flare-bubble-avatar {
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2147483647;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--flare-primary);
+  border-radius: 50%;
+  overflow: hidden;
 }
 
-.flare-fab:hover {
-  transform: translateY(-3px) scale(1.06);
-  box-shadow: 0 12px 34px rgba(255, 87, 34, 0.7), 0 0 20px rgba(255, 87, 34, 0.75);
-}
-
-.flare-fab:active {
-  transform: translateY(0) scale(0.96);
-}
-
-.flare-fab svg {
-  width: 30px;
-  height: 30px;
+.flare-bubble-avatar svg {
+  width: 18px;
+  height: 18px;
   fill: currentColor;
+}
+
+.flare-bubble-avatar video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.flare-bubble-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flare-bubble-title .flare-status-dot {
+  display: inline-block;
+}
+
+.flare-bubble-text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #f0f6fc;
+}
+
+/* Danh sách các tag gợi ý bay lơ lửng (Floating Suggestion Pills) */
+.flare-mascot-pills {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
   transition: all 0.3s ease;
 }
 
-.flare-fab.open svg.icon-flame {
-  display: none;
+.flare-mascot-launcher.collapsed .flare-mascot-bubble,
+.flare-mascot-launcher.collapsed .flare-mascot-pills {
+  display: none !important;
 }
 
-.flare-fab:not(.open) svg.icon-close {
-  display: none;
+.flare-mascot-pill {
+  background: rgba(22, 27, 34, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 87, 34, 0.4);
+  color: #f0f6fc;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  text-align: right;
+  max-width: 300px;
+  white-space: normal;
+  line-height: 1.35;
 }
 
-.flare-fab-pulse {
-  position: absolute;
+.flare-mascot-pill:hover {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  color: #ffffff;
+  border-color: #ff784e;
+  transform: translateX(-4px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(255, 87, 34, 0.55);
+}
+
+/* Chú Mascot Ngọn Lửa Chuyển Động (Animated Character) */
+.flare-mascot-character-wrapper {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flare-mascot-character {
+  position: relative;
+  width: 125px;
+  height: 125px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flare-mascot-character.is-dragging {
+  cursor: grabbing !important;
+  transform: scale(1.06);
+}
+
+.flare-mascot-character:hover {
+  transform: scale(1.09) translateY(-4px);
+}
+
+.flare-mascot-video {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 87, 34, 0.85);
-  animation: pulse-ring 2.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  object-fit: contain;
   pointer-events: none;
+  filter: drop-shadow(0 8px 22px rgba(255, 87, 34, 0.5));
 }
 
-@keyframes pulse-ring {
-  0% { transform: scale(0.95); opacity: 0.85; }
-  50% { transform: scale(1.4); opacity: 0; }
-  100% { transform: scale(1.4); opacity: 0; }
+.flare-mascot-glow {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 75px;
+  height: 18px;
+  background: radial-gradient(ellipse at center, rgba(255, 87, 34, 0.65) 0%, rgba(255, 87, 34, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  animation: glow-pulse 2.4s infinite ease-in-out;
+}
+
+/* Nút Thu nhỏ / Ẩn bớt lời chào */
+.flare-mascot-toggle-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(22, 27, 34, 0.85);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+  color: var(--flare-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.flare-mascot-toggle-btn:hover {
+  opacity: 1;
+  color: var(--flare-text);
+  border-color: var(--flare-primary);
+  background: var(--flare-bg-card);
+}
+
+.flare-mascot-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  transition: transform 0.25s ease;
+}
+
+.flare-mascot-launcher.collapsed .flare-mascot-toggle-btn svg {
+  transform: rotate(180deg);
+}
+
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(0.95); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+}
+
+/* Video Mascot trong Header và Avatar tin nhắn */
+.flare-header-avatar video,
+.flare-msg-avatar video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 /* Khung cửa sổ Chat — Mở rộng rộng rãi hơn (440px) */
 .flare-window {
   position: fixed;
-  bottom: 94px;
+  bottom: 24px;
   right: 24px;
   width: 440px;
   max-width: calc(100vw - 32px);
   height: 620px;
-  max-height: calc(100vh - 115px);
+  max-height: calc(100vh - 48px);
   background: var(--flare-bg-main);
   border: 1px solid var(--flare-border);
   border-radius: var(--flare-radius);
@@ -558,26 +699,53 @@ var E=Object.defineProperty;var k=(p,o,l)=>o in p?E(p,o,{enumerable:!0,configura
     display: none;
   }
 }
-`;async function o(h,e,t=[],a="guest"){const i=`${h.replace(/\/+$/,"")}/chat`,r=await fetch(i,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:e,history:t,role:a})});if(!r.ok){let s=`Lỗi máy chủ (${r.status})`;try{const c=await r.json();c.detail&&(s=c.detail)}catch{}throw new Error(s)}return r.json()}const l=`
+`;async function m(h,e,t=[],a="guest"){const i=`${h.replace(/\/+$/,"")}/chat`,r=await fetch(i,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:e,history:t,role:a})});if(!r.ok){let s=`Lỗi máy chủ (${r.status})`;try{const g=await r.json();g.detail&&(s=g.detail)}catch{}throw new Error(s)}return r.json()}const E=`
 <svg class="icon-flame" viewBox="0 0 24 24" fill="currentColor">
   <path d="M12 23c-4.97 0-9-3.96-9-8.83 0-3.9 2.53-7.58 4.67-9.84.41-.44 1.12-.34 1.39.2 1.09 2.18 2.52 3.82 3.94 4.54.42.21.92-.08.95-.55.15-2.26 1.4-5.4 3.95-7.46.46-.37 1.15-.05 1.17.54.12 3.52 1.39 6.27 3.01 7.82 1.25 1.19 1.92 2.62 1.92 4.58 0 4.87-4.03 8.83-9 8.83z"/>
 </svg>
-`,d={guest:{subtitle:"Khách vãng lai",greeting:"Bạn cần mình hỗ trợ gì về kỹ năng an toàn PCCC & thoát hiểm ạ? 😊",quickPrompts:["🚨 Kỹ năng thoát hiểm khi có khói độc","🧯 Cách sử dụng bình chữa cháy CO2 và bột","📞 Khi phát hiện cháy cần gọi số nào?","ℹ️ Giới thiệu hệ thống cảnh báo cháy FLARE"]},user:{subtitle:"Người dùng hệ thống",greeting:"Chào bạn! Bạn cần hỗ trợ gì về sử dụng FLARE hoặc an toàn PCCC? 😊",quickPrompts:["📱 Hướng dẫn kết nối Bot Zalo nhận cảnh báo","📹 Cách bật webcam laptop phát hiện cháy","❓ Cách gửi phản hồi khi hệ thống nhận diện sai","🚨 Kỹ năng thoát hiểm khi có khói"]},admin_ops:{subtitle:"Quản trị Vận hành",greeting:"Chào Quản trị viên Vận hành! Bạn cần hỗ trợ gì về tác vụ hệ thống? ⚡",quickPrompts:["📊 Cách giám sát phiên cảnh báo realtime hệ thống","👥 Quy trình quản lý và duyệt tài khoản người dùng","📋 Cách xem báo cáo đánh giá sự cố hỏa hoạn","⚙️ Hướng dẫn lệnh CLI tạo tài khoản quản trị"]},admin:{subtitle:"Quản trị Vận hành",greeting:"Chào Quản trị viên Vận hành! Bạn cần hỗ trợ gì về tác vụ hệ thống? ⚡",quickPrompts:["📊 Cách giám sát phiên cảnh báo realtime hệ thống","👥 Quy trình quản lý và duyệt tài khoản người dùng","📋 Cách xem báo cáo đánh giá sự cố hỏa hoạn","⚙️ Hướng dẫn lệnh CLI tạo tài khoản quản trị"]},admin_model:{subtitle:"Quản trị Mô hình AI",greeting:"Chào Quản trị viên Mô hình! Bạn cần hỗ trợ gì về MLOps & Dataset? 🎯",quickPrompts:["🏷️ Hướng dẫn dùng canvas SVG vẽ lại bounding box","🔄 Chu trình Active Learning bổ sung dữ liệu","📦 Cách xuất dataset chuẩn định dạng YOLO","🧪 Quy trình kiểm định và đối soát mô hình mới"]}};function b(h){if(!h)return"";let t=h.replace(/\[nguồn:\s*[^\]]+\]/gi,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");t=t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>"),t=t.replace(/`([^`]+)`/g,"<code>$1</code>");const a=t.split(`
-`),i=[];let r=!1,s=!1;for(const c of a){const g=c.trim();if(g.startsWith("- ")||g.startsWith("* ")){s&&(i.push("</ol>"),s=!1),r||(i.push("<ul>"),r=!0),i.push(`<li>${g.substring(2)}</li>`);continue}const u=g.match(/^(\d+)\.\s+(.*)/);if(u){r&&(i.push("</ul>"),r=!1),s||(i.push("<ol>"),s=!0),i.push(`<li>${u[2]}</li>`);continue}r&&(i.push("</ul>"),r=!1),s&&(i.push("</ol>"),s=!1),g.length>0&&i.push(`<p>${c}</p>`)}return r&&i.push("</ul>"),s&&i.push("</ol>"),i.join("")}function C(){var e;if((e=window.FlareChatWidgetConfig)!=null&&e.apiUrl)return window.FlareChatWidgetConfig.apiUrl;const h=document.querySelectorAll("script");for(let t=0;t<h.length;t++){const a=h[t].src||"";if(a.includes("widget.js"))try{return`${new URL(a).origin}/api`}catch{}}return"http://localhost:8001/api"}class x{constructor(e){n(this,"config");n(this,"container",null);n(this,"shadow",null);n(this,"isOpen",!1);n(this,"isFullscreen",!1);n(this,"isLoading",!1);n(this,"currentRole","guest");n(this,"currentUserId",null);n(this,"history",[]);n(this,"messagesContainer",null);n(this,"inputElem",null);n(this,"sendBtn",null);n(this,"fabBtn",null);n(this,"fabBadge",null);n(this,"windowElem",null);n(this,"expandBtn",null);n(this,"subtitleElem",null);var i;const t=((i=window.FlareChatWidgetConfig)==null?void 0:i.role)||(e==null?void 0:e.role)||"guest";this.currentRole=this.normalizeRole(t);const u=((i=window.FlareChatWidgetConfig)==null?void 0:i.userId)||(e==null?void 0:e.userId)||null;this.currentUserId=this.currentRole==="guest"?null:(u?String(u):null);const a=d[this.currentRole]||d.guest;this.config={apiUrl:C(),title:"Flare AI",subtitle:a.subtitle,placeholder:"Hỏi Flare AI...",quickPrompts:a.quickPrompts,...window.FlareChatWidgetConfig,...e},this.mount()}normalizeRole(e){const t=(e||"").toLowerCase().trim();return t==="admin"||t==="admin_ops"?"admin_ops":t==="admin_model"?"admin_model":t==="user"?"user":"guest"}getStorageKey(){return!this.currentUserId||this.currentRole==="guest"?null:"flare_chat_history_"+this.currentUserId}saveHistory(){const e=this.getStorageKey();if(!e)return;try{localStorage.setItem(e,JSON.stringify(this.history.slice(-20)))}catch{}}loadHistory(){if(!this.messagesContainer)return;this.messagesContainer.innerHTML="";const e=this.getStorageKey();let t=[];if(e)try{const a=localStorage.getItem(e);if(a){const i=JSON.parse(a);Array.isArray(i)&&(t=i)}}catch{t=[]}this.history=t,this.renderInitialGreeting();if(t.length>0){for(const a of t){a.role==="user"?this.appendUserMessage(a.content):a.role==="assistant"&&this.appendAssistantMessage(a.content)}}this.scrollToBottom()}setRole(e,u=null){const t=this.normalizeRole(e),uid=t==="guest"?null:(u?String(u):this.currentUserId),changed=this.currentRole!==t||this.currentUserId!==uid;this.currentRole=t,this.currentUserId=uid;const a=d[t]||d.guest;this.config.subtitle=a.subtitle,this.config.quickPrompts=a.quickPrompts,this.subtitleElem&&(this.subtitleElem.textContent=a.subtitle),changed&&this.loadHistory()}init(e){e&&(e.role&&this.setRole(e.role,e.userId),this.config={...this.config,...e})}open(){var e,t,a;this.isOpen||(this.isOpen=!0,(e=this.windowElem)==null||e.classList.add("active"),(t=this.fabBtn)==null||t.classList.add("open"),(a=this.fabBadge)==null||a.classList.add("hidden"),setTimeout(()=>{var i;(i=this.inputElem)==null||i.focus(),this.scrollToBottom()},250))}close(){var e,t,a;this.isOpen&&(this.isOpen=!1,(e=this.windowElem)==null||e.classList.remove("active"),(t=this.fabBtn)==null||t.classList.remove("open"),(a=this.fabBadge)==null||a.classList.remove("hidden"))}toggle(){this.isOpen?this.close():this.open()}toggleFullscreen(){var e,t;this.isFullscreen=!this.isFullscreen,this.isFullscreen?(e=this.windowElem)==null||e.classList.add("fullscreen"):(t=this.windowElem)==null||t.classList.remove("fullscreen"),this.scrollToBottom()}clear(){this.history=[];const e=this.getStorageKey();if(e)try{localStorage.removeItem(e)}catch{}this.messagesContainer&&(this.messagesContainer.innerHTML="",this.renderInitialGreeting())}mount(){if(document.getElementById("flare-rag-widget-root"))return;this.container=document.createElement("div"),this.container.id="flare-rag-widget-root",document.body.appendChild(this.container),this.shadow=this.container.attachShadow({mode:"open"});const e=document.createElement("style");e.textContent=p,this.shadow.appendChild(e);const t=d[this.currentRole]||d.guest,a=document.createElement("div");a.innerHTML=`
-      <!-- Tooltip Badge Gọi Mời Nhận Diện Chatbot -->
-      <div class="flare-fab-badge" id="flare-fab-badge" title="Bấm để trò chuyện cùng Flare AI">
-        <span class="flare-badge-icon">🔥</span>
-        <span>Hỏi Flare AI</span>
-      </div>
+`,u={guest:{subtitle:"Khách vãng lai",greeting:"Bạn cần mình hỗ trợ gì về kỹ năng an toàn PCCC & thoát hiểm ạ? 😊",quickPrompts:["🚨 Kỹ năng thoát hiểm khi có khói độc","🧯 Cách sử dụng bình chữa cháy CO2 và bột","📞 Khi phát hiện cháy cần gọi số nào?","ℹ️ Giới thiệu hệ thống cảnh báo cháy FLARE"]},user:{subtitle:"Người dùng hệ thống",greeting:"Chào bạn! Bạn cần hỗ trợ gì về sử dụng FLARE hoặc an toàn PCCC? 😊",quickPrompts:["📷 Cách biến điện thoại thành camera giám sát","📱 Hướng dẫn kết nối Bot Zalo nhận cảnh báo","📹 Cách bật webcam laptop phát hiện cháy","❓ Cách gửi phản hồi khi hệ thống nhận diện sai","🚨 Kỹ năng thoát hiểm khi có khói"]},admin_ops:{subtitle:"Quản trị Vận hành",greeting:"Chào Quản trị viên Vận hành! Bạn cần hỗ trợ gì về tác vụ hệ thống? ⚡",quickPrompts:["📊 Cách giám sát phiên cảnh báo realtime hệ thống","👥 Quy trình quản lý và duyệt tài khoản người dùng","📋 Cách xem báo cáo đánh giá sự cố hỏa hoạn","⚙️ Hướng dẫn lệnh CLI tạo tài khoản quản trị"]},admin:{subtitle:"Quản trị Vận hành",greeting:"Chào Quản trị viên Vận hành! Bạn cần hỗ trợ gì về tác vụ hệ thống? ⚡",quickPrompts:["📊 Cách giám sát phiên cảnh báo realtime hệ thống","👥 Quy trình quản lý và duyệt tài khoản người dùng","📋 Cách xem báo cáo đánh giá sự cố hỏa hoạn","⚙️ Hướng dẫn lệnh CLI tạo tài khoản quản trị"]},admin_model:{subtitle:"Quản trị Mô hình AI",greeting:"Chào Quản trị viên Mô hình! Bạn cần hỗ trợ gì về MLOps & Dataset? 🎯",quickPrompts:["🏷️ Hướng dẫn dùng canvas SVG vẽ lại bounding box","🔄 Chu trình Active Learning bổ sung dữ liệu","📦 Cách xuất dataset chuẩn định dạng YOLO","🧪 Quy trình kiểm định và đối soát mô hình mới"]}};function k(h){if(!h)return"";let t=h.replace(/\[nguồn:\s*[^\]]+\]/gi,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");t=t.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>"),t=t.replace(/`([^`]+)`/g,"<code>$1</code>");const a=t.split(`
+`),i=[];let r=!1,s=!1;for(const g of a){const p=g.trim();if(p.startsWith("- ")||p.startsWith("* ")){s&&(i.push("</ol>"),s=!1),r||(i.push("<ul>"),r=!0),i.push(`<li>${p.substring(2)}</li>`);continue}const b=p.match(/^(\d+)\.\s+(.*)/);if(b){r&&(i.push("</ul>"),r=!1),s||(i.push("<ol>"),s=!0),i.push(`<li>${b[2]}</li>`);continue}r&&(i.push("</ul>"),r=!1),s&&(i.push("</ol>"),s=!1),p.length>0&&i.push(`<p>${g}</p>`)}return r&&i.push("</ul>"),s&&i.push("</ol>"),i.join("")}function z(){var e;if((e=window.FlareChatWidgetConfig)!=null&&e.apiUrl)return window.FlareChatWidgetConfig.apiUrl;const h=document.querySelectorAll("script");for(let t=0;t<h.length;t++){const a=h[t].src||"";if(a.includes("widget.js"))try{return`${new URL(a).origin}/api`}catch{}}return"http://localhost:8001/api"}function F(){var e,t;if((e=window.FlareChatWidgetConfig)!=null&&e.mascotUrl)return window.FlareChatWidgetConfig.mascotUrl;const h=document.querySelectorAll("script");for(let a=0;a<h.length;a++){const i=h[a].src||"";if(i.includes("widget.js"))try{return`${new URL(i).origin}/mascot_flare.webm`}catch{}}if((t=window.FlareChatWidgetConfig)!=null&&t.apiUrl)try{return`${new URL(window.FlareChatWidgetConfig.apiUrl).origin}/mascot_flare.webm`}catch{}return"/mascot_flare.webm"}let o=null;class L{constructor(e){l(this,"config");l(this,"container",null);l(this,"shadow",null);l(this,"isOpen",!1);l(this,"isFullscreen",!1);l(this,"isLoading",!1);l(this,"currentRole","guest");l(this,"currentUserId",null);l(this,"mascotUrl","");l(this,"mascotLauncherElem",null);l(this,"mascotGreetingElem",null);l(this,"mascotPillsElem",null);l(this,"isMascotCollapsed",!1);l(this,"history",[]);l(this,"messagesContainer",null);l(this,"inputElem",null);l(this,"sendBtn",null);l(this,"fabBtn",null);l(this,"fabBadge",null);l(this,"windowElem",null);l(this,"expandBtn",null);l(this,"subtitleElem",null);var i,r,s;const t=((i=window.FlareChatWidgetConfig)==null?void 0:i.role)||(e==null?void 0:e.role)||"guest";this.currentRole=this.normalizeRole(t),this.currentUserId=((r=window.FlareChatWidgetConfig)==null?void 0:r.userId)||(e==null?void 0:e.userId)||null,this.currentRole==="guest"&&(this.currentUserId=null);const a=u[this.currentRole]||u.guest;this.mascotUrl=(e==null?void 0:e.mascotUrl)||((s=window.FlareChatWidgetConfig)==null?void 0:s.mascotUrl)||F(),this.config={apiUrl:z(),mascotUrl:this.mascotUrl,title:"Flare AI",subtitle:a.subtitle,placeholder:"Hỏi Flare AI...",quickPrompts:a.quickPrompts,...window.FlareChatWidgetConfig,...e},this.mount(),o=this}getAvatarHtml(){return this.mascotUrl?`<video class="flare-avatar-mascot-video" src="${this.mascotUrl}" autoplay loop muted playsinline></video>`:E}normalizeRole(e){const t=(e||"").toLowerCase().trim();return t==="admin"||t==="admin_ops"?"admin_ops":t==="admin_model"?"admin_model":t==="user"?"user":"guest"}getStorageKey(){return!this.currentUserId||this.currentRole==="guest"?null:`flare_chat_history_${this.currentUserId}`}saveHistory(){const e=this.getStorageKey();if(e)try{localStorage.setItem(e,JSON.stringify(this.history))}catch{}}loadHistory(){if(!this.messagesContainer)return;this.messagesContainer.innerHTML="";const e=this.getStorageKey();let t=[];if(e)try{const a=localStorage.getItem(e);if(a){const i=JSON.parse(a);Array.isArray(i)&&(t=i)}}catch{t=[]}if(this.history=t,this.renderInitialGreeting(),t.length>0)for(const a of t)a.role==="user"?this.appendUserMessage(a.content):a.role==="assistant"&&this.appendAssistantMessage(a.content)}setRole(e,t=null){const a=this.normalizeRole(e),i=a==="guest"?null:t?String(t):this.currentUserId,r=this.currentRole!==a||this.currentUserId!==i;this.currentRole=a,this.currentUserId=i;const s=u[a]||u.guest;this.config.subtitle=s.subtitle,this.config.quickPrompts=s.quickPrompts,this.subtitleElem&&(this.subtitleElem.textContent=s.subtitle),this.mascotGreetingElem&&(this.mascotGreetingElem.textContent=s.greeting),this.mascotPillsElem&&(this.mascotPillsElem.innerHTML=s.quickPrompts.map(g=>`<button class="flare-mascot-pill" data-prompt="${g}">${g}</button>`).join(""),this.bindMascotPills()),r&&this.loadHistory()}static setRole(e,t=null){if(o)o.setRole(e,t);else{const a=(e||"").toLowerCase().trim();window.FlareChatWidgetConfig={...window.FlareChatWidgetConfig,role:a,userId:e==="guest"?null:t?String(t):null}}}static open(){o==null||o.open()}static close(){o==null||o.close()}static toggle(){o==null||o.toggle()}static clear(){o==null||o.clear()}static getInstance(){return o}init(e){e&&(e.role&&this.setRole(e.role),this.config={...this.config,...e})}open(){var e,t;this.isOpen||(this.isOpen=!0,(e=this.windowElem)==null||e.classList.add("active"),(t=this.mascotLauncherElem)==null||t.classList.add("hidden"),setTimeout(()=>{var a;(a=this.inputElem)==null||a.focus(),this.scrollToBottom()},250))}close(){var e,t;this.isOpen&&(this.isOpen=!1,(e=this.windowElem)==null||e.classList.remove("active"),(t=this.mascotLauncherElem)==null||t.classList.remove("hidden"))}toggle(){this.isOpen?this.close():this.open()}toggleFullscreen(){var e,t;this.isFullscreen=!this.isFullscreen,this.isFullscreen?(e=this.windowElem)==null||e.classList.add("fullscreen"):(t=this.windowElem)==null||t.classList.remove("fullscreen"),this.scrollToBottom()}clear(){this.history=[];const e=this.getStorageKey();if(e)try{localStorage.removeItem(e)}catch{}this.messagesContainer&&(this.messagesContainer.innerHTML="",this.renderInitialGreeting())}mount(){if(document.getElementById("flare-rag-widget-root"))return;this.container=document.createElement("div"),this.container.id="flare-rag-widget-root",document.body.appendChild(this.container),this.shadow=this.container.attachShadow({mode:"open"});const e=document.createElement("style");e.textContent=v,this.shadow.appendChild(e);const t=u[this.currentRole]||u.guest,a=document.createElement("div");a.innerHTML=`
+      <!-- Mascot Launcher Nổi Bật Ở Góc Phải (Theo Hình Mẫu) -->
+      <div class="flare-mascot-launcher" id="flare-mascot-launcher">
+        <!-- 1. Hộp Lời Chào Nổi -->
+        <div class="flare-mascot-bubble" id="flare-mascot-bubble" title="Bấm để mở chat cùng Flare AI">
+          <div class="flare-bubble-header">
+            <div class="flare-bubble-avatar">
+              ${this.getAvatarHtml()}
+            </div>
+            <div class="flare-bubble-title">
+              <span>Flare AI</span>
+              <span class="flare-status-dot"></span>
+            </div>
+          </div>
+          <div class="flare-bubble-text" id="flare-mascot-greeting-text">
+            ${t.greeting}
+          </div>
+        </div>
 
-      <!-- Nút Tròn Nổi FAB với Icon Ngọn Lửa -->
-      <button class="flare-fab" id="flare-fab" title="Trợ lý Flare AI">
-        <div class="flare-fab-pulse"></div>
-        ${l}
-        <svg class="icon-close" viewBox="0 0 24 24">
-          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-        </svg>
-      </button>
+        <!-- 2. Danh Sách Câu Hỏi Nhanh Xếp Dọc Nổi Lơ Lửng -->
+        <div class="flare-mascot-pills" id="flare-mascot-pills">
+          ${t.quickPrompts.map(i=>`<button class="flare-mascot-pill" data-prompt="${i}">${i}</button>`).join("")}
+        </div>
+
+        <!-- 3. Chú Mascot Ngọn Lửa Chuyển Động & Nút Thu Nhỏ -->
+        <div class="flare-mascot-character-wrapper">
+          <button class="flare-mascot-toggle-btn" id="flare-mascot-toggle-btn" title="Thu nhỏ / Mở rộng gợi ý">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+          </button>
+          <div class="flare-mascot-character" id="flare-mascot-character" title="Bấm để trò chuyện cùng Flare AI">
+            <div class="flare-mascot-glow"></div>
+            <video
+              class="flare-mascot-video"
+              src="${this.mascotUrl}"
+              autoplay
+              loop
+              muted
+              playsinline
+            ></video>
+          </div>
+        </div>
+      </div>
 
       <!-- Khung Cửa Sổ Chatbot -->
       <div class="flare-window" id="flare-window">
@@ -585,7 +753,7 @@ var E=Object.defineProperty;var k=(p,o,l)=>o in p?E(p,o,{enumerable:!0,configura
         <div class="flare-header">
           <div class="flare-header-left">
             <div class="flare-header-avatar">
-              ${l}
+              ${this.getAvatarHtml()}
             </div>
             <div>
               <div class="flare-header-title">${this.config.title}</div>
@@ -643,17 +811,17 @@ var E=Object.defineProperty;var k=(p,o,l)=>o in p?E(p,o,{enumerable:!0,configura
           <div class="flare-brand">Hệ thống FLARE • Trợ lý AI Thông minh</div>
         </div>
       </div>
-    `,this.shadow.appendChild(a),this.fabBtn=this.shadow.getElementById("flare-fab"),this.fabBadge=this.shadow.getElementById("flare-fab-badge"),this.windowElem=this.shadow.getElementById("flare-window"),this.messagesContainer=this.shadow.getElementById("flare-messages"),this.inputElem=this.shadow.getElementById("flare-input"),this.sendBtn=this.shadow.getElementById("flare-btn-send"),this.expandBtn=this.shadow.getElementById("flare-btn-expand"),this.subtitleElem=this.shadow.getElementById("flare-header-subtitle-text"),this.bindEvents(),this.loadHistory()}renderInitialGreeting(){if(!this.messagesContainer)return;const e=d[this.currentRole]||d.guest,t=document.createElement("div");t.className="flare-msg assistant",t.innerHTML=`
-      <div class="flare-msg-avatar">${l}</div>
+    `,this.shadow.appendChild(a),this.mascotLauncherElem=this.shadow.getElementById("flare-mascot-launcher"),this.mascotGreetingElem=this.shadow.getElementById("flare-mascot-greeting-text"),this.mascotPillsElem=this.shadow.getElementById("flare-mascot-pills"),this.windowElem=this.shadow.getElementById("flare-window"),this.messagesContainer=this.shadow.getElementById("flare-messages"),this.inputElem=this.shadow.getElementById("flare-input"),this.sendBtn=this.shadow.getElementById("flare-btn-send"),this.expandBtn=this.shadow.getElementById("flare-btn-expand"),this.subtitleElem=this.shadow.getElementById("flare-header-subtitle-text"),this.bindEvents(),this.loadHistory()}renderInitialGreeting(){if(!this.messagesContainer)return;const e=u[this.currentRole]||u.guest,t=document.createElement("div");t.className="flare-msg assistant",t.innerHTML=`
+      <div class="flare-msg-avatar">${this.getAvatarHtml()}</div>
       <div class="flare-msg-bubble">
         <p>Xin chào, mình là trợ lý ảo <strong>Flare AI</strong> 👋</p>
       </div>
     `,this.messagesContainer.appendChild(t);const a=document.createElement("div");a.className="flare-msg assistant",a.innerHTML=`
-      <div class="flare-msg-avatar" style="visibility: hidden;">${l}</div>
+      <div class="flare-msg-avatar" style="visibility: hidden;">${this.getAvatarHtml()}</div>
       <div class="flare-msg-bubble">
         <p>${e.greeting}</p>
       </div>
-    `,this.messagesContainer.appendChild(a);const i=document.createElement("div");i.className="flare-suggestions-group",i.innerHTML=e.quickPrompts.map(r=>`<button class="flare-suggest-pill" data-prompt="${r}">${r}</button>`).join(""),this.messagesContainer.appendChild(i),i.querySelectorAll(".flare-suggest-pill").forEach(r=>{r.addEventListener("click",()=>{const s=r.getAttribute("data-prompt");s&&this.handleSend(s)})}),this.scrollToBottom()}bindEvents(){var e,t,a,i,r,s,c,g,u,w;(e=this.fabBtn)==null||e.addEventListener("click",()=>this.toggle()),(t=this.fabBadge)==null||t.addEventListener("click",()=>this.open()),(i=(a=this.shadow)==null?void 0:a.getElementById("flare-btn-close"))==null||i.addEventListener("click",()=>this.close()),(s=(r=this.shadow)==null?void 0:r.getElementById("flare-btn-clear"))==null||s.addEventListener("click",()=>this.clear()),(c=this.expandBtn)==null||c.addEventListener("click",()=>this.toggleFullscreen()),(g=this.inputElem)==null||g.addEventListener("input",()=>{!this.inputElem||!this.sendBtn||(this.inputElem.style.height="auto",this.inputElem.style.height=Math.min(this.inputElem.scrollHeight,100)+"px",this.sendBtn.disabled=!this.inputElem.value.trim()||this.isLoading)}),(u=this.inputElem)==null||u.addEventListener("keydown",f=>{var m;if(f.key==="Enter"&&!f.shiftKey){f.preventDefault();const y=(m=this.inputElem)==null?void 0:m.value.trim();y&&!this.isLoading&&this.handleSend(y)}}),(w=this.sendBtn)==null||w.addEventListener("click",()=>{var m;const f=(m=this.inputElem)==null?void 0:m.value.trim();f&&!this.isLoading&&this.handleSend(f)})}async handleSend(e){if(!e||this.isLoading)return;this.inputElem&&(this.inputElem.value="",this.inputElem.style.height="auto"),this.sendBtn&&(this.sendBtn.disabled=!0),this.appendUserMessage(e),this.isLoading=!0;const t=this.showTypingIndicator();try{const a=await o(this.config.apiUrl||"http://localhost:8001/api",e,this.history,this.currentRole);t.remove(),this.appendAssistantMessage(a.answer),this.history.push({role:"user",content:e}),this.history.push({role:"assistant",content:a.answer}),this.history=this.history.slice(-20),this.saveHistory()}catch(a){t.remove();const i=a instanceof Error?a.message:"Đã có lỗi xảy ra.";this.appendAssistantMessage(`⚠️ **Không thể kết nối tới máy chủ Flare AI**
+    `,this.messagesContainer.appendChild(a);const i=document.createElement("div");i.className="flare-suggestions-group",i.innerHTML=e.quickPrompts.map(r=>`<button class="flare-suggest-pill" data-prompt="${r}">${r}</button>`).join(""),this.messagesContainer.appendChild(i),i.querySelectorAll(".flare-suggest-pill").forEach(r=>{r.addEventListener("click",()=>{const s=r.getAttribute("data-prompt");s&&this.handleSend(s)})}),this.scrollToBottom()}bindMascotPills(){this.mascotPillsElem&&this.mascotPillsElem.querySelectorAll(".flare-mascot-pill").forEach(e=>{e.addEventListener("click",t=>{t.stopPropagation();const a=e.getAttribute("data-prompt");a&&(this.open(),this.handleSend(a))})})}setupMascotDrag(){var C;const e=this.mascotLauncherElem,t=(C=this.shadow)==null?void 0:C.getElementById("flare-mascot-character");if(!e||!t)return;try{const n=localStorage.getItem("flare_mascot_pos");if(n){const f=JSON.parse(n);if(typeof f.bottom=="number"&&typeof f.left=="number"){const d=Math.max(16,Math.min(window.innerWidth-150,f.left)),c=Math.max(16,Math.min(window.innerHeight-150,f.bottom));e.style.left=`${d}px`,e.style.bottom=`${c}px`,e.style.right="auto",e.style.top="auto",d<window.innerWidth/2?e.classList.add("is-left"):e.classList.remove("is-left")}else localStorage.removeItem("flare_mascot_pos")}}catch{}let a=!1,i=!1,r=0,s=0,g=0,p=0;const b=n=>{if("button"in n&&n.button!==0)return;a=!0,i=!1;const f="clientX"in n?n.clientX:n.touches[0].clientX,d="clientY"in n?n.clientY:n.touches[0].clientY;r=f,s=d;const c=e.getBoundingClientRect();g=c.left,p=window.innerHeight-c.bottom,e.style.transition="none",t.classList.add("is-dragging"),window.addEventListener("mousemove",w,{passive:!1}),window.addEventListener("mouseup",y),window.addEventListener("touchmove",w,{passive:!1}),window.addEventListener("touchend",y)},w=n=>{if(!a)return;const f="clientX"in n?n.clientX:n.touches[0].clientX,d="clientY"in n?n.clientY:n.touches[0].clientY,c=f-r,x=d-s;if(!i&&Math.hypot(c,x)>4&&(i=!0),i){n.cancelable&&n.preventDefault();const B=e.getBoundingClientRect(),S=B.width||140,A=B.height||140,H=16,$=Math.max(H,window.innerWidth-S-16),I=16,U=Math.max(I,window.innerHeight-A-16),T=Math.max(H,Math.min($,g+c)),R=Math.max(I,Math.min(U,p-x));e.style.left=`${T}px`,e.style.bottom=`${R}px`,e.style.right="auto",e.style.top="auto",T<window.innerWidth/2?e.classList.add("is-left"):e.classList.remove("is-left")}},y=()=>{if(a)if(a=!1,t.classList.remove("is-dragging"),e.style.transition="",window.removeEventListener("mousemove",w),window.removeEventListener("mouseup",y),window.removeEventListener("touchmove",w),window.removeEventListener("touchend",y),i)try{const n=e.getBoundingClientRect(),f=window.innerHeight-n.bottom;localStorage.setItem("flare_mascot_pos",JSON.stringify({left:Math.round(n.left),bottom:Math.round(Math.max(16,f))}))}catch{}else this.open()};t.addEventListener("mousedown",b),t.addEventListener("touchstart",b,{passive:!0})}bindEvents(){var t,a,i,r,s,g,p,b,w,y,C,n,f;this.setupMascotDrag(),(a=(t=this.shadow)==null?void 0:t.getElementById("flare-mascot-bubble"))==null||a.addEventListener("click",()=>this.open());const e=(i=this.shadow)==null?void 0:i.getElementById("flare-mascot-toggle-btn");e==null||e.addEventListener("click",d=>{var c,x;d.stopPropagation(),this.isMascotCollapsed=!this.isMascotCollapsed,this.isMascotCollapsed?(c=this.mascotLauncherElem)==null||c.classList.add("collapsed"):(x=this.mascotLauncherElem)==null||x.classList.remove("collapsed")}),this.bindMascotPills(),(r=this.fabBtn)==null||r.addEventListener("click",()=>this.toggle()),(s=this.fabBadge)==null||s.addEventListener("click",()=>this.open()),(p=(g=this.shadow)==null?void 0:g.getElementById("flare-btn-close"))==null||p.addEventListener("click",()=>this.close()),(w=(b=this.shadow)==null?void 0:b.getElementById("flare-btn-clear"))==null||w.addEventListener("click",()=>this.clear()),(y=this.expandBtn)==null||y.addEventListener("click",()=>this.toggleFullscreen()),(C=this.inputElem)==null||C.addEventListener("input",()=>{!this.inputElem||!this.sendBtn||(this.inputElem.style.height="auto",this.inputElem.style.height=Math.min(this.inputElem.scrollHeight,100)+"px",this.sendBtn.disabled=!this.inputElem.value.trim()||this.isLoading)}),(n=this.inputElem)==null||n.addEventListener("keydown",d=>{var c;if(d.key==="Enter"&&!d.shiftKey){d.preventDefault();const x=(c=this.inputElem)==null?void 0:c.value.trim();x&&!this.isLoading&&this.handleSend(x)}}),(f=this.sendBtn)==null||f.addEventListener("click",()=>{var c;const d=(c=this.inputElem)==null?void 0:c.value.trim();d&&!this.isLoading&&this.handleSend(d)})}async handleSend(e){if(!e||this.isLoading)return;this.inputElem&&(this.inputElem.value="",this.inputElem.style.height="auto"),this.sendBtn&&(this.sendBtn.disabled=!0),this.appendUserMessage(e),this.isLoading=!0;const t=this.showTypingIndicator();try{const a=await m(this.config.apiUrl||"http://localhost:8001/api",e,this.history,this.currentRole);t.remove(),this.appendAssistantMessage(a.answer),this.history.push({role:"user",content:e}),this.history.push({role:"assistant",content:a.answer}),this.history=this.history.slice(-20),this.saveHistory()}catch(a){t.remove();const i=a instanceof Error?a.message:"Đã có lỗi xảy ra.";this.appendAssistantMessage(`⚠️ **Không thể kết nối tới máy chủ Flare AI**
 
 Chi tiết: ${i}
 
@@ -663,16 +831,16 @@ Chi tiết: ${i}
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
         </svg>
       </div>
-      <div class="flare-msg-bubble">${b(e)}</div>
+      <div class="flare-msg-bubble">${k(e)}</div>
     `,this.messagesContainer.appendChild(t),this.scrollToBottom()}appendAssistantMessage(e,t=[]){if(!this.messagesContainer)return;const a=document.createElement("div");a.className="flare-msg assistant",a.innerHTML=`
       <div class="flare-msg-avatar">
-        ${l}
+        ${this.getAvatarHtml()}
       </div>
       <div class="flare-msg-bubble">
-        ${b(e)}
+        ${k(e)}
       </div>
     `,this.messagesContainer.appendChild(a),this.scrollToBottom()}showTypingIndicator(){var t;const e=document.createElement("div");return e.className="flare-typing",e.innerHTML=`
       <div class="flare-typing-dot"></div>
       <div class="flare-typing-dot"></div>
       <div class="flare-typing-dot"></div>
-    `,(t=this.messagesContainer)==null||t.appendChild(e),this.scrollToBottom(),e}scrollToBottom(){this.messagesContainer&&requestAnimationFrame(()=>{setTimeout(()=>{this.messagesContainer&&(this.messagesContainer.scrollTop=this.messagesContainer.scrollHeight)},30)})}}let _inst=null;x.setRole=function(r,u=null){if(_inst)_inst.setRole(r,u);else window.FlareChatWidgetConfig=Object.assign(window.FlareChatWidgetConfig||{},{role:r,userId:r==="guest"?null:u})};x.open=function(){_inst&&_inst.open()};x.close=function(){_inst&&_inst.close()};x.toggle=function(){_inst&&_inst.toggle()};x.clear=function(){_inst&&_inst.clear()};x.getInstance=function(){return _inst};function v(){if(!_inst){_inst=new x()}window.flareWidgetInstance=_inst;window.flareWidget=_inst;window.FlareChatWidget=_inst;if(window.FlareChatWidgetConfig){const cfgRole=window.FlareChatWidgetConfig.role,cfgUid=window.FlareChatWidgetConfig.userId;if(cfgRole){_inst.setRole(cfgRole,cfgUid)}}}return document.readyState==="loading"?document.addEventListener("DOMContentLoaded",v):v(),x}();
+    `,(t=this.messagesContainer)==null||t.appendChild(e),this.scrollToBottom(),e}scrollToBottom(){this.messagesContainer&&requestAnimationFrame(()=>{setTimeout(()=>{this.messagesContainer&&(this.messagesContainer.scrollTop=this.messagesContainer.scrollHeight)},30)})}}function M(){if(o||(o=new L),window.flareWidgetInstance=o,window.flareWidget=o,window.FlareChatWidget=L,window.FlareChatWidgetConfig){const h=window.FlareChatWidgetConfig.role,e=window.FlareChatWidgetConfig.userId;h&&o.setRole(h,e)}}return document.readyState==="loading"?document.addEventListener("DOMContentLoaded",M):M(),L}();

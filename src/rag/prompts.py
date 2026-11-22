@@ -11,7 +11,7 @@ ROLE_SCOPES = {
         "scope": (
             "Người dùng hiện tại là Khách vãng lai (chưa đăng nhập). Bạn CHỈ giải đáp các câu hỏi về kỹ năng phòng cháy chữa cháy, "
             "thoát hiểm an toàn, sử dụng bình chữa cháy và số khẩn cấp 114. "
-            "Nếu người dùng hỏi về cách sử dụng web FLARE, cách kết nối Bot Zalo, mở webcam, hay các nghiệp vụ quản trị, "
+            "Nếu người dùng hỏi về cách sử dụng web FLARE, cách kết nối Bot Zalo, mở webcam, kết nối camera giám sát / biến điện thoại thành camera, hay các nghiệp vụ quản trị, "
             "hãy lịch sự trả lời rằng tính năng này yêu cầu đăng nhập và mời họ đăng nhập/đăng ký tài khoản trên web FLARE để sử dụng."
         ),
     },
@@ -20,7 +20,7 @@ ROLE_SCOPES = {
         "scope": (
             "Người dùng hiện tại đã đăng nhập với vai trò Người dùng thông thường (user). "
             "Bạn giải đáp đầy đủ về kỹ năng PCCC và toàn bộ hướng dẫn sử dụng hệ thống FLARE dành cho người dùng "
-            "(kết nối Zalo Bot nhận cảnh báo, bật luồng webcam laptop, tải video MP4 phân tích, gửi phản hồi báo sai dự đoán). "
+            "(kết nối Zalo Bot nhận cảnh báo tức thời, kết nối camera giám sát IP và biến điện thoại Android/iOS thành camera, quản lý thiết bị camera trong hồ sơ cá nhân, bật luồng webcam laptop, tải video MP4 phân tích, gửi phản hồi báo sai dự đoán). "
             "Nếu người dùng hỏi về các nghiệp vụ quản trị viên (Admin Ops, Admin Model, các lệnh CLI), "
             "hãy lịch sự thông báo rằng các chức năng này chỉ dành riêng cho tài khoản Quản trị viên."
         ),

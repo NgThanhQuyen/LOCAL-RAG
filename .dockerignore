@@ -2,11 +2,22 @@
 .gitignore
 .pytest_cache
 .venv
+venv
 __pycache__
 *.pyc
 *.pyo
 *.pyd
 *.log
 .env
+.env.*
+
+# Node / Widget artifacts
+node_modules/
+widget/node_modules/
+widget/dist/
+
+# Data isolation
+data/raw/*
+!data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep

@@ -24,127 +24,268 @@ export const WIDGET_STYLES = `
   padding: 0;
 }
 
-/* Tooltip Badge "🔥 Hỏi Flare AI" */
-.flare-fab-badge {
+/* Tooltip Badge & Nút Tròn (Ẩn khi có Mascot Launcher) */
+.flare-fab-badge, .flare-fab {
+  display: none !important;
+}
+
+/* Mascot Launcher Container nổi ở góc dưới bên phải */
+.flare-mascot-launcher {
   position: fixed;
-  bottom: 30px;
-  right: 92px;
-  background: var(--flare-bg-panel);
-  color: var(--flare-text);
-  border: 1px solid rgba(255, 87, 34, 0.5);
-  padding: 9px 16px;
-  border-radius: 30px;
-  font-size: 13.5px;
-  font-weight: 500;
+  bottom: 16px;
+  right: 20px;
+  z-index: 2147483646;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.flare-mascot-launcher.hidden {
+  opacity: 0;
+  transform: translateY(20px) scale(0.9);
+  pointer-events: none !important;
+}
+
+.flare-mascot-launcher.is-left {
+  align-items: flex-start;
+}
+
+.flare-mascot-launcher.is-left .flare-mascot-bubble {
+  border-radius: 18px 18px 18px 4px;
+}
+
+.flare-mascot-launcher.is-left .flare-mascot-pills {
+  align-items: flex-start;
+}
+
+/* Thẻ bong bóng lời chào nổi (Floating Greeting Bubble) */
+.flare-mascot-bubble {
+  pointer-events: auto;
+  background: rgba(22, 27, 34, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 87, 34, 0.45);
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  max-width: 290px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 16px rgba(255, 87, 34, 0.25);
+  animation: mascot-float 3.8s ease-in-out infinite;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flare-mascot-bubble:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--flare-primary);
+  box-shadow: 0 16px 36px rgba(255, 87, 34, 0.4);
+}
+
+.flare-bubble-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 87, 34, 0.3);
-  cursor: pointer;
-  z-index: 2147483647;
-  white-space: nowrap;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: badge-float 3s ease-in-out infinite;
+  margin-bottom: 6px;
 }
 
-.flare-fab-badge:hover {
-  transform: translateY(-2px) scale(1.04);
-  border-color: var(--flare-primary);
-  box-shadow: 0 8px 26px rgba(255, 87, 34, 0.5);
-}
-
-.flare-fab-badge.hidden {
-  opacity: 0;
-  transform: translateX(14px) scale(0.85);
-  pointer-events: none;
-}
-
-.flare-badge-icon {
-  font-size: 16px;
-  display: inline-flex;
-  align-items: center;
-  animation: flame-flicker 1.8s infinite ease-in-out;
-}
-
-@keyframes badge-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-@keyframes flame-flicker {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.15) rotate(4deg); }
-}
-
-/* Nút bấm tròn hình Ngọn lửa (FAB) */
-.flare-fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
-  color: #ffffff;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 8px 28px rgba(255, 87, 34, 0.55), 0 0 0 2px rgba(255, 255, 255, 0.2);
+.flare-bubble-avatar {
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2147483647;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--flare-primary);
+  border-radius: 50%;
+  overflow: hidden;
 }
 
-.flare-fab:hover {
-  transform: translateY(-3px) scale(1.06);
-  box-shadow: 0 12px 34px rgba(255, 87, 34, 0.7), 0 0 20px rgba(255, 87, 34, 0.75);
-}
-
-.flare-fab:active {
-  transform: translateY(0) scale(0.96);
-}
-
-.flare-fab svg {
-  width: 30px;
-  height: 30px;
+.flare-bubble-avatar svg {
+  width: 18px;
+  height: 18px;
   fill: currentColor;
+}
+
+.flare-bubble-avatar video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.flare-bubble-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flare-bubble-title .flare-status-dot {
+  display: inline-block;
+}
+
+.flare-bubble-text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #f0f6fc;
+}
+
+/* Danh sách các tag gợi ý bay lơ lửng (Floating Suggestion Pills) */
+.flare-mascot-pills {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
   transition: all 0.3s ease;
 }
 
-.flare-fab.open svg.icon-flame {
-  display: none;
+.flare-mascot-launcher.collapsed .flare-mascot-bubble,
+.flare-mascot-launcher.collapsed .flare-mascot-pills {
+  display: none !important;
 }
 
-.flare-fab:not(.open) svg.icon-close {
-  display: none;
+.flare-mascot-pill {
+  background: rgba(22, 27, 34, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 87, 34, 0.4);
+  color: #f0f6fc;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  text-align: right;
+  max-width: 300px;
+  white-space: normal;
+  line-height: 1.35;
 }
 
-.flare-fab-pulse {
-  position: absolute;
+.flare-mascot-pill:hover {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  color: #ffffff;
+  border-color: #ff784e;
+  transform: translateX(-4px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(255, 87, 34, 0.55);
+}
+
+/* Chú Mascot Ngọn Lửa Chuyển Động (Animated Character) */
+.flare-mascot-character-wrapper {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flare-mascot-character {
+  position: relative;
+  width: 125px;
+  height: 125px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flare-mascot-character.is-dragging {
+  cursor: grabbing !important;
+  transform: scale(1.06);
+}
+
+.flare-mascot-character:hover {
+  transform: scale(1.09) translateY(-4px);
+}
+
+.flare-mascot-video {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 87, 34, 0.85);
-  animation: pulse-ring 2.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  object-fit: contain;
   pointer-events: none;
+  filter: drop-shadow(0 8px 22px rgba(255, 87, 34, 0.5));
 }
 
-@keyframes pulse-ring {
-  0% { transform: scale(0.95); opacity: 0.85; }
-  50% { transform: scale(1.4); opacity: 0; }
-  100% { transform: scale(1.4); opacity: 0; }
+.flare-mascot-glow {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 75px;
+  height: 18px;
+  background: radial-gradient(ellipse at center, rgba(255, 87, 34, 0.65) 0%, rgba(255, 87, 34, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  animation: glow-pulse 2.4s infinite ease-in-out;
+}
+
+/* Nút Thu nhỏ / Ẩn bớt lời chào */
+.flare-mascot-toggle-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(22, 27, 34, 0.85);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+  color: var(--flare-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.flare-mascot-toggle-btn:hover {
+  opacity: 1;
+  color: var(--flare-text);
+  border-color: var(--flare-primary);
+  background: var(--flare-bg-card);
+}
+
+.flare-mascot-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  transition: transform 0.25s ease;
+}
+
+.flare-mascot-launcher.collapsed .flare-mascot-toggle-btn svg {
+  transform: rotate(180deg);
+}
+
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(0.95); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+}
+
+/* Video Mascot trong Header và Avatar tin nhắn */
+.flare-header-avatar video,
+.flare-msg-avatar video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 /* Khung cửa sổ Chat — Mở rộng rộng rãi hơn (440px) */
 .flare-window {
   position: fixed;
-  bottom: 94px;
+  bottom: 24px;
   right: 24px;
   width: 440px;
   max-width: calc(100vw - 32px);
   height: 620px;
-  max-height: calc(100vh - 115px);
+  max-height: calc(100vh - 48px);
   background: var(--flare-bg-main);
   border: 1px solid var(--flare-border);
   border-radius: var(--flare-radius);

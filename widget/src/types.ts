@@ -18,7 +18,9 @@ export interface QueryResponse {
 
 export interface WidgetConfig {
   apiUrl?: string;
+  mascotUrl?: string;
   role?: UserRole;
+  userId?: string | null;
   title?: string;
   subtitle?: string;
   placeholder?: string;

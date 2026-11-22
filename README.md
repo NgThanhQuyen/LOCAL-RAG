@@ -20,7 +20,7 @@
 
 Dự án cung cấp kiến trúc **hai trong một (Dual-Client Architecture)**:
 1. **Interactive Web Application**: Ứng dụng Web Single Page hoàn chỉnh (SPA) với giao diện Dark Mode cao cấp, quản lý phiên chat đa luồng (Sessions), quản lý tài liệu (Upload/Xóa), nạp vector tự động và hiển thị trích dẫn nguồn trực quan.
-2. **Standalone Embeddable Chat Widget (`widget.js`)**: Thành phần Chat Widget độc lập được viết bằng TypeScript + Vite, đóng gói theo định dạng IIFE (~26 KB) sử dụng **Shadow DOM** để nhúng liền mạch vào bất kỳ trang web nào chỉ với 1 thẻ `<script>` mà không gây xung đột CSS.
+2. **Standalone Embeddable Chat Widget (`widget.js`)**: Thành phần Chat Widget độc lập được viết bằng TypeScript + Vite, đóng gói theo định dạng IIFE (~34 KB) sử dụng **Shadow DOM** để nhúng liền mạch vào bất kỳ trang web nào chỉ với 1 thẻ `<script>` mà không gây xung đột CSS. Widget tích hợp **Linh vật Mascot 3D chuyển động nền trong suốt (Alpha WebM)** cùng danh sách gợi ý câu hỏi thông minh (Interactive Suggestion Pills) tự động điều chỉnh theo vai trò người dùng.
 
 ---
 
@@ -61,9 +61,16 @@ Dự án cung cấp kiến trúc **hai trong một (Dual-Client Architecture)**:
 - **NumPy Matrix Multiplication**: Tận dụng tối đa tập lệnh CPU SIMD để tính toán khoảng cách và xếp hạng Top-$K$ ($K=8$) đoạn tài liệu trong vòng vài miligiây.
 
 ### 3. Phân Quyền Truy Cập 2 Lớp (Two-Layer RBAC Architecture)
-Hỗ trợ phân quyền chặt chẽ theo vai trò người dùng (`guest`, `user`, `admin_ops`, `admin_model`):
-- **Lớp 1 — Lọc Vector Cứng (Metadata Filtering):** Hàm tìm kiếm vector chỉ tính toán trên các chunk có `allowed_roles` khớp với quyền của người gọi. Đảm bảo **Zero Data Leakage** — tài liệu quản trị không bao giờ lọt vào ngữ cảnh của người dùng thường hoặc khách vãng lai.
+Hỗ trợ phân quyền tri thức chặt chẽ theo vai trò người dùng (`guest`, `user`, `admin_ops`, `admin_model`):
+- **Lớp 1 — Lọc Vector Cứng (Metadata Filtering):** Hàm tìm kiếm vector chỉ tính toán trên các chunk có `allowed_roles` khớp với quyền của người gọi. Đảm bảo **Zero Data Leakage** — tài liệu quản trị nội bộ tuyệt đối không bị rò rỉ vào ngữ cảnh tìm kiếm của người dùng thông thường hoặc khách vãng lai.
 - **Lớp 2 — Điều Hướng Phong Cách Mềm (Persona Steering):** Tinh chỉnh System Instructions theo từng vai trò: phản hồi tự nhiên, giải thích rõ thẩm quyền và hướng dẫn đăng nhập lịch sự khi có yêu cầu vượt cấp.
+
+| Vai Trò | Tên Hiển Thị | Phạm Vi Tri Thức & Quyền Hạn Hỗ Trợ |
+| :--- | :--- | :--- |
+| `guest` | Khách vãng lai | Kiến thức an toàn PCCC, kỹ năng thoát hiểm khi có khói độc, cách sử dụng bình chữa cháy bột/CO2, số khẩn cấp 114. Giới thiệu tổng quan hệ thống. |
+| `user` | Người dùng đã đăng nhập | Toàn bộ kiến thức PCCC + Hướng dẫn tính năng người dùng: **biến điện thoại thành camera giám sát qua IP Webcam (RTSP/MJPEG)**, bật webcam laptop, kết nối Bot Zalo nhận tin nhắn cảnh báo, tải video MP4 phân tích, gửi phản hồi khi AI nhận diện sai. |
+| `admin_ops` | Quản trị Vận hành | Hỗ trợ nghiệp vụ vận hành: giám sát luồng cảnh báo realtime, theo dõi sự cố toàn hệ thống, quản lý/phê duyệt tài khoản người dùng, xem báo cáo hỏa hoạn và các lệnh CLI vận hành. |
+| `admin_model` | Quản trị Mô hình AI | Hỗ trợ nghiệp vụ MLOps: sử dụng công cụ canvas hiệu chỉnh bounding box, tiếp nhận dữ liệu phản hồi báo sai, quy trình Active Learning, xuất dataset chuẩn định dạng YOLO và kiểm định mô hình trước kích hoạt. |
 
 ### 4. Trí Nhớ Hội Thoại Đa Lượt & Tái Cấu Trúc Câu Hỏi (Conversational Multi-Turn RAG)
 - **Standalone Query Rewriting**: Khi người dùng đặt câu hỏi phụ thuộc ngữ cảnh trước đó (*"nó là gì"*, *"hướng dẫn chi tiết hơn đi"*), hệ thống tự động phân tích lịch sử hội thoại và viết lại thành một câu hỏi độc lập đầy đủ thực thể trước khi truy xuất kho vector.
@@ -102,7 +109,8 @@ LOCAL-RAG/
 │   │       ├── index.html    # Giao diện Dark Mode SPA
 │   │       ├── css/style.css # Giao diện thiết kế Glassmorphism
 │   │       ├── js/app.js     # Quản lý phiên chat (Sessions) & Markdown render
-│   │       └── widget.js     # Bundle Chat Widget độc lập (~26 KB)
+│   │       ├── widget.js     # Bundle Chat Widget độc lập (~34 KB)
+│   │       └── mascot_flare.webm # Video Mascot chuyển động nền trong suốt (Alpha Channel)
 │   │
 │   └── rag/                  # Package lõi RAG Engine
 │       ├── config.py         # Nạp cấu hình môi trường từ .env
@@ -265,6 +273,14 @@ window.FlareChatWidget.clear();
 - **Khách vãng lai (`guest`):** Không lưu vào `localStorage`. Lịch sử chỉ lưu trong RAM/DOM của phiên hiện tại. Khi người dùng tải lại trang (F5) hoặc Đăng xuất, khung chat tự động xóa trắng về trạng thái ban đầu.
 - **Tài khoản đã đăng nhập (`user`, `admin_ops`, `admin_model`):** Lưu trữ độc lập vào `localStorage` theo khóa `flare_chat_history_${userId}` (tối đa 20 tin nhắn gần nhất). Đảm bảo cách ly 100% dữ liệu trò chuyện giữa các tài khoản khác nhau trên cùng một trình duyệt.
 
+### 5. Giao Diện Mascot Chuyển Động & Thẻ Gợi Ý Tương Tác (Interactive Floating Mascot)
+Thay vì nút tròn Floating Action Button (FAB) thông thường, widget cung cấp trải nghiệm sinh động với **Linh vật thông minh (Interactive Mascot Launcher)**:
+- **Video Trong Suốt Chuẩn WebM VP9:** Linh vật hiển thị với nền trong suốt (Alpha Channel), chuyển động vẫy tay và thở tự nhiên không viền cứng, kích thước tối ưu (~1.9 MB).
+- **Thẻ Lời Chào Tự Động Thích Ứng (Floating Greeting Card):** Hiển thị tên trợ lý, chức danh và lời chào tương ứng với vai trò của người dùng.
+- **Bong Bóng Gợi Ý Nhanh (Dynamic Suggestion Pills):** Các viên thuốc gợi ý câu hỏi được xếp dọc tinh tế ngay trên đầu mascot. Khi người dùng bấm vào một gợi ý bất kỳ (ví dụ: *"📷 Cách biến điện thoại thành camera giám sát"*), widget sẽ tự động mở hộp thoại và gửi ngay câu hỏi đến RAG Pipeline.
+- **Nút Thu Gọn Thẻ Chào (Toggle Accordion):** Cho phép người dùng linh hoạt ẩn/hiện thẻ chào và bong bóng gợi ý khi cần tập trung vào giao diện chính của trang web.
+- **Avatar Phản Hồi Trực Quan:** Mascot thu nhỏ xuất hiện tự nhiên tại từng tin nhắn phản hồi của trợ lý AI bên trong hộp chat.
+
 ---
 
 ## 7. Tài Liệu REST API
@@ -352,7 +368,19 @@ pytest
 
 ## 10. Lưu Ý Về An Toàn & Bảo Mật Khi Đưa Vào Vận Hành
 
-1. **Bảo Mật API Key**: Tuyệt đối không commit file `.env` chứa `GEMINI_API_KEY` lên các kho mã nguồn công khai (GitHub/GitLab). File `.gitignore` của dự án đã được cấu hình sẵn để chặn `.env` và `node_modules/`.
+1. **Bảo Mật API Key**: Tuyệt đối không commit file `.env` chứa `GEMINI_API_KEY` lên các kho mã nguồn công khai (GitHub/GitLab). File `.gitignore` và `.dockerignore` của dự án đã được cấu hình sẵn để chặn `.env` và `node_modules/`.
 2. **Xác Thực Vai Trò (Production RBAC)**: Khi triển khai vào hệ thống thực tế, tham số `role` của endpoint `/api/chat` nên được xác thực qua **JWT Bearer Token** hoặc Session Cookie từ dịch vụ Auth thay vì nhận tham số trần từ client.
 3. **CORS Origins**: Trong môi trường Production, cấu hình biến `CORS_ORIGINS` trong `.env` thành danh sách domain cụ thể (ví dụ: `https://mywebsite.com,https://app.mywebsite.com`) thay vì để `*`.
-4. **An Toàn Thao Tác File**: Các endpoint Upload và Delete file đã được tích hợp bộ lọc chống tấn công **Directory Traversal** (`Path.name`, kiểm tra `resolve()`) và giới hạn kích thước file chống tấn công cạn kiệt bộ nhớ (DoS).
+4. **An Toàn Thao Tác File**: Các endpoint Upload và Delete file đã được tích hợp bộ lọc chống tấn công **Directory Traversal** (`Path.name`, kiểm tra `resolve()`) và giới hạn kích thước file chống tấn công cạn kiệt bộ nhớ (DoS tối đa 25MB).
+
+---
+
+## 11. Checklist An Toàn Trước Khi Push Lên GitHub
+
+Trước khi đẩy mã nguồn lên GitHub, dự án đã được rà soát và đáp ứng toàn bộ các tiêu chí an toàn sau:
+
+- [x] **Không Rò Rỉ Bí Mật (No Leaked Secrets)**: File `.env` chứa `GEMINI_API_KEY` thực tế đã được chặn hoàn toàn bởi `.gitignore`. File `.env.example` chỉ chứa mẫu cấu hình với giá trị khóa rỗng.
+- [x] **Cô Lập Dữ Liệu Nội Bộ (Data Privacy)**: Thư mục chứa tài liệu thô `data/raw/*` và bộ nhớ đệm vector `data/processed/*` (.npz, .json) được đưa vào danh sách bỏ qua của cả `.gitignore` và `.dockerignore` (chỉ giữ file `.gitkeep` để duy trì cấu trúc thư mục).
+- [x] **Không Đẩy File Rác & Cache (Clean Working Tree)**: Toàn bộ thư mục `node_modules/`, `widget/node_modules/`, `widget/dist/`, `.pytest_cache/`, `__pycache__/` đều bị loại trừ khỏi Git commit.
+- [x] **Rà Soát Quét Tự Động (Automated Secret Scanning)**: Đã chạy script quét regex kiểm tra toàn bộ cây thư mục, đảm bảo không có bất kỳ chuỗi token, khóa cá nhân hay credentials nào bị hardcode trong mã nguồn.
+- [x] **Tài Sản Tĩnh Chuẩn Bị Đầy Đủ**: File video `src/api/static/mascot_flare.webm` (~1.9 MB) và bundle `src/api/static/widget.js` đã được biên dịch tối ưu sẵn sàng phục vụ nhúng widget.
