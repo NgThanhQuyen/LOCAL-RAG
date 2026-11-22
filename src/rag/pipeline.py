@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+import re
 
 from google import genai
 from google.genai import types
@@ -32,10 +34,11 @@ def get_allowed_roles_for_source(source: str) -> list[str]:
 
 @dataclass
 class RAGAnswer:
-    """Kết quả phản hồi bao gồm nội dung câu trả lời và danh sách nguồn tài liệu tham khảo."""
+    """Kết quả phản hồi bao gồm nội dung câu trả lời, nguồn tham khảo và action tương tác giao diện."""
 
     answer: str
     sources: list[SearchResult]
+    action: dict | None = None
 
 
 class RAGPipeline:
@@ -131,7 +134,24 @@ class RAGPipeline:
         system_prompt = prompts.get_system_prompt_for_role(role)
         answer_text = self.llm.generate(prompt, system=system_prompt)
 
-        return RAGAnswer(answer=answer_text, sources=results)
+        # Trích xuất khối ```flare-action ... ``` nếu có
+        clean_answer = answer_text
+        action_dict: dict | None = None
+        action_match = re.search(r"```flare-action\s*(\{.*?\})\s*```", answer_text, re.DOTALL)
+        if action_match:
+            try:
+                raw_json = action_match.group(1).strip()
+                action_dict = json.loads(raw_json)
+                # Tách khối action ra khỏi câu trả lời để hiển thị tự nhiên
+                clean_answer = (
+                    answer_text[: action_match.start()].rstrip()
+                    + "\n"
+                    + answer_text[action_match.end() :].lstrip()
+                ).strip()
+            except Exception:
+                action_dict = None
+
+        return RAGAnswer(answer=clean_answer, sources=results, action=action_dict)
 
     def _get_store(self) -> VectorStore:
         """Nạp dữ liệu từ đĩa lưu trữ, tự động nạp lại nếu phát hiện tài liệu mới hoặc file vector thay đổi."""

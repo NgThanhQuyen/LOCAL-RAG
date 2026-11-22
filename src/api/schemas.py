@@ -31,11 +31,20 @@ class SourceItem(BaseModel):
     score: float
 
 
+class ActionPayload(BaseModel):
+    """Hành động tương tác giao diện (UI Action) gửi về client."""
+
+    action: str = Field(..., description="Mã hành động, ví dụ: 'NAVIGATE', 'ADD_CAMERA', 'TOGGLE_WEBCAM'")
+    label: str = Field(default="", description="Nhãn hiển thị trên nút bấm tương tác")
+    params: dict = Field(default_factory=dict, description="Các tham số đi kèm hành động")
+
+
 class QueryResponse(BaseModel):
     """Kết quả trả về cho câu hỏi RAG."""
 
     answer: str
     sources: list[SourceItem]
+    action: ActionPayload | None = None
 
 
 class DocumentItem(BaseModel):

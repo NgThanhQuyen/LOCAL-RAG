@@ -1,5 +1,5 @@
 import { WIDGET_STYLES } from "./styles";
-import { ChatMessage, SourceItem, WidgetConfig, UserRole } from "./types";
+import { ChatMessage, SourceItem, WidgetConfig, UserRole, FlareAction } from "./types";
 import { sendChatMessage } from "./api";
 
 declare global {
@@ -13,6 +13,14 @@ declare global {
 const FLAME_SVG = `
 <svg class="icon-flame" viewBox="0 0 24 24" fill="currentColor">
   <path d="M12 23c-4.97 0-9-3.96-9-8.83 0-3.9 2.53-7.58 4.67-9.84.41-.44 1.12-.34 1.39.2 1.09 2.18 2.52 3.82 3.94 4.54.42.21.92-.08.95-.55.15-2.26 1.4-5.4 3.95-7.46.46-.37 1.15-.05 1.17.54.12 3.52 1.39 6.27 3.01 7.82 1.25 1.19 1.92 2.62 1.92 4.58 0 4.87-4.03 8.83-9 8.83z"/>
+</svg>
+`;
+
+// SVG Biểu tượng Microphone thu âm
+const MIC_SVG = `
+<svg viewBox="0 0 24 24" fill="currentColor">
+  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
 </svg>
 `;
 
@@ -197,6 +205,36 @@ function detectMascotUrl(): string {
   return "/mascot_flare.webm";
 }
 
+function detectMascotAvatarUrl(): string {
+  if ((window.FlareChatWidgetConfig as any)?.avatarUrl) {
+    return (window.FlareChatWidgetConfig as any).avatarUrl;
+  }
+
+  const scripts = document.querySelectorAll("script");
+  for (let i = 0; i < scripts.length; i++) {
+    const src = scripts[i].src || "";
+    if (src.includes("widget.js")) {
+      try {
+        const u = new URL(src);
+        return `${u.origin}/mascot_avatar.png`;
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  if (window.FlareChatWidgetConfig?.apiUrl) {
+    try {
+      const u = new URL(window.FlareChatWidgetConfig.apiUrl);
+      return `${u.origin}/mascot_avatar.png`;
+    } catch {
+      // ignore
+    }
+  }
+
+  return "/mascot_avatar.png";
+}
+
 let widgetInstance: FlareChatWidgetController | null = null;
 
 class FlareChatWidgetController {
@@ -209,6 +247,7 @@ class FlareChatWidgetController {
   private currentRole: UserRole = "guest";
   private currentUserId: string | null = null;
   private mascotUrl: string = "";
+  private mascotAvatarUrl: string = "";
   private mascotLauncherElem: HTMLElement | null = null;
   private mascotGreetingElem: HTMLElement | null = null;
   private mascotPillsElem: HTMLElement | null = null;
@@ -217,6 +256,10 @@ class FlareChatWidgetController {
   private messagesContainer: HTMLElement | null = null;
   private inputElem: HTMLTextAreaElement | null = null;
   private sendBtn: HTMLButtonElement | null = null;
+  private micBtn: HTMLButtonElement | null = null;
+  private voiceIndicatorElem: HTMLElement | null = null;
+  private recognition: any = null;
+  private isListening = false;
   private fabBtn: HTMLButtonElement | null = null;
   private fabBadge: HTMLElement | null = null;
   private windowElem: HTMLElement | null = null;
@@ -231,10 +274,12 @@ class FlareChatWidgetController {
 
     const roleInfo = ROLE_CONFIGS[this.currentRole] || ROLE_CONFIGS.guest;
     this.mascotUrl = (customConfig as any)?.mascotUrl || (window.FlareChatWidgetConfig as any)?.mascotUrl || detectMascotUrl();
+    this.mascotAvatarUrl = (customConfig as any)?.avatarUrl || (window.FlareChatWidgetConfig as any)?.avatarUrl || detectMascotAvatarUrl();
 
     this.config = {
       apiUrl: detectApiUrl(),
       mascotUrl: this.mascotUrl,
+      avatarUrl: this.mascotAvatarUrl,
       title: "Flare AI",
       subtitle: roleInfo.subtitle,
       placeholder: "Hỏi Flare AI...",
@@ -248,10 +293,30 @@ class FlareChatWidgetController {
   }
 
   private getAvatarHtml(): string {
-    if (this.mascotUrl) {
-      return `<video class="flare-avatar-mascot-video" src="${this.mascotUrl}" autoplay loop muted playsinline></video>`;
-    }
-    return FLAME_SVG;
+    const videoSrc = this.mascotUrl || "/mascot_flare.webm";
+    return `
+      <video
+        src="${videoSrc}"
+        autoplay
+        loop
+        muted
+        playsinline
+        class="flare-avatar-mascot-video"
+        aria-label="FLARE Mascot"
+        onerror="this.style.display='none'; if (this.nextElementSibling) (this.nextElementSibling as HTMLElement).style.display='flex';"
+      ></video>
+      <div class="flare-avatar-fallback" style="display: none;">${FLAME_SVG}</div>
+    `;
+  }
+
+  private playAllVideos(container?: HTMLElement | null) {
+    const root = container || this.shadow;
+    if (!root) return;
+    root.querySelectorAll<HTMLVideoElement>("video").forEach((v) => {
+      if (v.paused) {
+        v.play().catch(() => {});
+      }
+    });
   }
 
   private normalizeRole(role: string): UserRole {
@@ -306,10 +371,11 @@ class FlareChatWidgetController {
         if (msg.role === "user") {
           this.appendUserMessage(msg.content);
         } else if (msg.role === "assistant") {
-          this.appendAssistantMessage(msg.content);
+          this.appendAssistantMessage(msg.content, [], null, false);
         }
       }
     }
+    this.playAllVideos();
   }
 
   public setRole(newRole: string, newUserId: string | null = null) {
@@ -390,9 +456,11 @@ class FlareChatWidgetController {
     this.isOpen = true;
     this.windowElem?.classList.add("active");
     this.mascotLauncherElem?.classList.add("hidden");
+    this.playAllVideos();
     setTimeout(() => {
       this.inputElem?.focus();
       this.scrollToBottom();
+      this.playAllVideos();
     }, 250);
   }
 
@@ -546,6 +614,14 @@ class FlareChatWidgetController {
 
         <!-- Khung nhập câu hỏi -->
         <div class="flare-footer">
+          <!-- Thanh trạng thái đang lắng nghe giọng nói -->
+          <div class="flare-voice-indicator" id="flare-voice-indicator">
+            <div class="flare-voice-wave">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <span>Đang lắng nghe giọng nói... Hãy ra lệnh hoặc đặt câu hỏi</span>
+          </div>
+
           <div class="flare-input-wrapper">
             <textarea
               class="flare-input"
@@ -553,6 +629,9 @@ class FlareChatWidgetController {
               rows="1"
               placeholder="${this.config.placeholder}"
             ></textarea>
+            <button class="flare-btn-mic" id="flare-btn-mic" type="button" title="Ra lệnh bằng giọng nói (Voice-to-Action)">
+              ${MIC_SVG}
+            </button>
             <button class="flare-btn-send" id="flare-btn-send" disabled title="Gửi tin nhắn">
               <svg viewBox="0 0 24 24">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -573,6 +652,8 @@ class FlareChatWidgetController {
     this.messagesContainer = this.shadow.getElementById("flare-messages");
     this.inputElem = this.shadow.getElementById("flare-input") as HTMLTextAreaElement;
     this.sendBtn = this.shadow.getElementById("flare-btn-send") as HTMLButtonElement;
+    this.micBtn = this.shadow.getElementById("flare-btn-mic") as HTMLButtonElement;
+    this.voiceIndicatorElem = this.shadow.getElementById("flare-voice-indicator");
     this.expandBtn = this.shadow.getElementById("flare-btn-expand") as HTMLButtonElement;
     this.subtitleElem = this.shadow.getElementById("flare-header-subtitle-text");
 
@@ -595,6 +676,7 @@ class FlareChatWidgetController {
       </div>
     `;
     this.messagesContainer.appendChild(msg1);
+    this.playAllVideos(msg1);
 
     // Bong bóng chào hỏi 2
     const msg2 = document.createElement("div");
@@ -606,6 +688,7 @@ class FlareChatWidgetController {
       </div>
     `;
     this.messagesContainer.appendChild(msg2);
+    this.playAllVideos(msg2);
 
     // Danh sách tag hỏi nhanh xếp dọc theo đúng vai trò hiện tại
     const suggestionsGroup = document.createElement("div");
@@ -827,9 +910,119 @@ class FlareChatWidgetController {
         this.handleSend(text);
       }
     });
+
+    // Bắt sự kiện Ra lệnh giọng nói (Voice-to-Action)
+    this.micBtn?.addEventListener("click", () => this.toggleListening());
+    this.initSpeechRecognition();
   }
 
-  private async handleSend(question: string) {
+  private initSpeechRecognition() {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      if (this.micBtn) {
+        this.micBtn.title = "Trình duyệt không hỗ trợ nhận diện giọng nói (Khuyên dùng Chrome hoặc Edge)";
+        this.micBtn.style.opacity = "0.5";
+      }
+      return;
+    }
+
+    try {
+      this.recognition = new SpeechRecognition();
+      this.recognition.lang = "vi-VN";
+      this.recognition.continuous = false;
+      this.recognition.interimResults = true;
+      this.recognition.maxAlternatives = 1;
+
+      this.recognition.onstart = () => {
+        this.isListening = true;
+        this.micBtn?.classList.add("is-listening");
+        this.voiceIndicatorElem?.classList.add("active");
+        if (this.inputElem) {
+          this.inputElem.placeholder = "Đang lắng nghe... (Nói lệnh hoặc câu hỏi)";
+        }
+      };
+
+      this.recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        let finalTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        if (this.inputElem && currentText) {
+          this.inputElem.value = currentText;
+          this.inputElem.style.height = "auto";
+          this.inputElem.style.height = Math.min(this.inputElem.scrollHeight, 100) + "px";
+          this.inputElem.dispatchEvent(new Event("input"));
+        }
+
+        if (finalTranscript.trim()) {
+          const query = finalTranscript.trim();
+          this.stopListening();
+          setTimeout(() => {
+            this.handleSend(query);
+          }, 350);
+        }
+      };
+
+      this.recognition.onerror = (event: any) => {
+        console.warn("[FlareChatWidget] Speech Recognition Error:", event.error);
+        this.stopListening();
+        if (event.error === "not-allowed") {
+          alert("Vui lòng cấp quyền Microphone trên trình duyệt để sử dụng tính năng Ra lệnh giọng nói.");
+        }
+      };
+
+      this.recognition.onend = () => {
+        this.stopListening();
+      };
+    } catch (err) {
+      console.warn("[FlareChatWidget] Lỗi khởi tạo SpeechRecognition:", err);
+    }
+  }
+
+  private toggleListening() {
+    if (!this.recognition) {
+      alert("Trình duyệt của bạn chưa hỗ trợ Web Speech API. Hãy mở trên Google Chrome hoặc Microsoft Edge để trải nghiệm.");
+      return;
+    }
+
+    if (this.isListening) {
+      this.recognition.stop();
+      this.stopListening();
+    } else {
+      if (this.inputElem) {
+        this.inputElem.value = "";
+        this.inputElem.style.height = "auto";
+      }
+      try {
+        this.recognition.start();
+      } catch (e) {
+        console.warn("[FlareChatWidget] Lỗi start speech recognition:", e);
+      }
+    }
+  }
+
+  private stopListening() {
+    this.isListening = false;
+    this.micBtn?.classList.remove("is-listening");
+    this.voiceIndicatorElem?.classList.remove("active");
+    if (this.inputElem) {
+      this.inputElem.placeholder = this.config.placeholder || "Hỏi Flare AI...";
+    }
+  }
+
+  private async handleSend(questionText?: string) {
+    const question = (questionText !== undefined ? questionText : this.inputElem?.value || "").trim();
     if (!question || this.isLoading) return;
 
     if (this.inputElem) {
@@ -856,7 +1049,14 @@ class FlareChatWidgetController {
 
       typingElem.remove();
 
-      this.appendAssistantMessage(res.answer);
+      // Phân tích action tương tác hệ thống: Ưu tiên metadata từ backend Gemini, fallback sang client-side intent
+      let action: FlareAction | null = res.action || null;
+      if (!action) {
+        action = this.detectClientAction(question);
+      }
+
+      // Render tin nhắn với hiệu ứng Typewriter streaming mượt mà
+      this.appendAssistantMessage(res.answer, res.sources || [], action, true);
 
       this.history.push({ role: "user", content: question });
       this.history.push({ role: "assistant", content: res.answer });
@@ -866,7 +1066,10 @@ class FlareChatWidgetController {
       typingElem.remove();
       const message = err instanceof Error ? err.message : "Đã có lỗi xảy ra.";
       this.appendAssistantMessage(
-        `⚠️ **Không thể kết nối tới máy chủ Flare AI**\n\nChi tiết: ${message}\n\n*Gợi ý: Hãy đảm bảo Backend RAG đang hoạt động tại ${this.config.apiUrl}*`
+        `⚠️ **Không thể kết nối tới máy chủ Flare AI**\n\nChi tiết: ${message}\n\n*Gợi ý: Hãy đảm bảo Backend RAG đang hoạt động tại ${this.config.apiUrl}*`,
+        [],
+        null,
+        false
       );
     } finally {
       this.isLoading = false;
@@ -897,21 +1100,240 @@ class FlareChatWidgetController {
     this.scrollToBottom();
   }
 
-  private appendAssistantMessage(text: string, _sources: SourceItem[] = []) {
+  private dispatchWebAction(action: FlareAction) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("flare-action", {
+          detail: action,
+          bubbles: true,
+          composed: true,
+        })
+      );
+    } catch (e) {
+      console.warn("[FlareChatWidget] Không thể dispatch flare-action:", e);
+    }
+  }
+
+  private detectClientAction(question: string): FlareAction | null {
+    const q = question.toLowerCase();
+
+    // 1. Ý định Thêm Camera / Nhập IP camera
+    const addCamMatch =
+      q.match(/(?:thêm|tạo|nhập|đưa|kết nối|add)\s+(?:camera|cam|ip)/i) ||
+      q.match(/(?:camera|cam)\s+(?:với\s+)?ip/i) ||
+      q.match(/nhập\s+ip\s+cam/i);
+
+    if (addCamMatch) {
+      // Tìm IP/URL trong câu hỏi (ví dụ: 192.168.1.50 hoặc 192.168.1.50:8080 hoặc http://...)
+      const ipMatch = question.match(/(?:https?:\/\/)?((?:\d{1,3}\.){3}\d{1,3}(?::\d+)?(?:\/[^\s]*)?)/);
+      let streamUrl = "";
+      if (ipMatch) {
+        let raw = ipMatch[0].trim();
+        if (!raw.startsWith("http://") && !raw.startsWith("https://") && !raw.startsWith("rtsp://")) {
+          streamUrl = `http://${raw}${raw.includes("/") ? "" : "/video"}`;
+        } else {
+          streamUrl = raw;
+        }
+      }
+
+      // Nhận diện tên phòng hoặc khu vực
+      let location = "";
+      let name = "Camera IP mới";
+      const locMatch = question.match(/(?:phòng\s+ngủ|phòng\s+khách|nhà\s+bếp|khu\s+vực\s+bếp|bếp|bãi\s+xe|hầm\s+xe|sân\s+thượng|hành\s+lang|kho\s+hàng|cửa\s+chính)/i);
+      if (locMatch) {
+        const rawLoc = locMatch[0].trim();
+        location = rawLoc.charAt(0).toUpperCase() + rawLoc.slice(1);
+        name = `Camera ${location}`;
+      }
+
+      const label = `Mở form thêm Camera ${location ? `(${location})` : streamUrl ? `(${streamUrl.replace(/^https?:\/\//, '').split('/')[0]})` : ''}`.trim();
+
+      return {
+        action: "ADD_CAMERA",
+        label: label,
+        params: {
+          stream_url: streamUrl,
+          name: name,
+          location: location,
+        },
+      };
+    }
+
+    // 2. Ý định Bật/Tắt Webcam hoặc Tab Webcam
+    if (q.includes("webcam") || q.includes("cam laptop") || q.includes("cam trực tiếp")) {
+      return {
+        action: "TOGGLE_WEBCAM",
+        label: "Chuyển sang Webcam trực tiếp",
+        params: { state: "start", tab: "realtime" },
+      };
+    }
+
+    // 3. Ý định Tab Camera giám sát
+    if (
+      q.includes("danh sách camera") ||
+      q.includes("xem camera") ||
+      q.includes("màn hình camera") ||
+      q.includes("trang camera") ||
+      q.includes("mở camera")
+    ) {
+      return {
+        action: "NAVIGATE",
+        label: "Mở trang Camera giám sát",
+        params: { tab: "cameras" },
+      };
+    }
+
+    // 4. Ý định Tab Video
+    if (q.includes("video của tôi") || q.includes("tải video") || q.includes("upload video") || q.includes("phân tích video")) {
+      return {
+        action: "NAVIGATE",
+        label: "Mở trang Video tải lên",
+        params: { tab: "videos" },
+      };
+    }
+
+    // 5. Ý định Kết nối Zalo Bot
+    if (q.includes("kết nối zalo") || q.includes("bot zalo") || q.includes("cài zalo") || q.includes("thông tin cá nhân")) {
+      return {
+        action: "CONNECT_ZALO",
+        label: "Mở trang Hồ sơ & Kết nối Zalo",
+        params: { tab: "profile" },
+      };
+    }
+
+    // 6. Ý định Tab Quản trị / Lịch sử
+    if (q.includes("sự kiện") || q.includes("lịch sử cảnh báo") || q.includes("nhật ký")) {
+      return {
+        action: "NAVIGATE",
+        label: "Xem Sự kiện cảnh báo",
+        params: { tab: "events" },
+      };
+    }
+
+    return null;
+  }
+
+  private appendAssistantMessage(
+    text: string,
+    _sources: SourceItem[] = [],
+    action?: FlareAction | null,
+    enableStream = true
+  ) {
     if (!this.messagesContainer) return;
     const msg = document.createElement("div");
     msg.className = "flare-msg assistant";
 
+    let actionHtml = "";
+    if (action) {
+      actionHtml = `
+        <div class="flare-action-card">
+          <div class="flare-action-badge">
+            <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Tương tác hệ thống</span>
+          </div>
+          <button class="flare-action-btn" type="button" title="Bấm để kích hoạt trên giao diện">
+            <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>${action.label || "Thực hiện thao tác trên web"}</span>
+          </button>
+        </div>
+      `;
+    }
+
+    // Nếu không stream (ví dụ nạp lịch sử cũ hoặc thông báo lỗi ngắn)
+    if (!enableStream || text.length < 5) {
+      msg.innerHTML = `
+        <div class="flare-msg-avatar">
+          ${this.getAvatarHtml()}
+        </div>
+        <div class="flare-msg-bubble">
+          ${parseSimpleMarkdown(text)}
+          ${actionHtml}
+        </div>
+      `;
+      this.bindActionCardButton(msg, action);
+      this.messagesContainer.appendChild(msg);
+      this.playAllVideos(msg);
+      this.scrollToBottom();
+      return;
+    }
+
+    // Hiệu ứng Typewriter streaming cho tin nhắn mới
     msg.innerHTML = `
       <div class="flare-msg-avatar">
         ${this.getAvatarHtml()}
       </div>
       <div class="flare-msg-bubble">
-        ${parseSimpleMarkdown(text)}
+        <div class="flare-msg-content"></div>
+        <span class="flare-cursor"></span>
       </div>
     `;
     this.messagesContainer.appendChild(msg);
+    this.playAllVideos(msg);
     this.scrollToBottom();
+
+    const contentElem = msg.querySelector<HTMLElement>(".flare-msg-content");
+    const cursorElem = msg.querySelector<HTMLElement>(".flare-cursor");
+    const bubbleElem = msg.querySelector<HTMLElement>(".flare-msg-bubble");
+
+    let currentPos = 0;
+    const totalLen = text.length;
+    // Tốc độ: tính toán linh hoạt dựa trên độ dài
+    const step = Math.max(2, Math.min(6, Math.floor(totalLen / 120)));
+    const interval = 16;
+
+    let isDone = false;
+    const finishTyping = () => {
+      if (isDone) return;
+      isDone = true;
+      clearInterval(timer);
+      if (cursorElem) cursorElem.remove();
+      if (bubbleElem) {
+        bubbleElem.innerHTML = `${parseSimpleMarkdown(text)}${actionHtml}`;
+        this.bindActionCardButton(msg, action);
+      }
+      this.scrollToBottom();
+      // Tự động dispatch action ra hệ thống web FLARE ngay sau khi hoàn tất gõ chữ
+      if (action) {
+        this.dispatchWebAction(action);
+      }
+    };
+
+    // Bấm vào bong bóng chat để bỏ qua typewriter và hiển thị toàn bộ ngay lập tức
+    bubbleElem?.addEventListener("click", () => finishTyping(), { once: true });
+
+    const timer = setInterval(() => {
+      currentPos += step;
+      if (currentPos >= totalLen) {
+        finishTyping();
+      } else {
+        if (contentElem) {
+          contentElem.innerHTML = parseSimpleMarkdown(text.slice(0, currentPos));
+        }
+        this.scrollToBottom();
+      }
+    }, interval);
+  }
+
+  private bindActionCardButton(msg: HTMLElement, action?: FlareAction | null) {
+    if (!action) return;
+    const btn = msg.querySelector<HTMLButtonElement>(".flare-action-btn");
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+      this.dispatchWebAction(action);
+      btn.classList.add("is-executed");
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" style="stroke: #86efac"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Đã kích hoạt trên web!</span>
+      `;
+      setTimeout(() => {
+        btn.classList.remove("is-executed");
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>${action.label || "Kích hoạt lại thao tác"}</span>
+        `;
+      }, 3000);
+    });
   }
 
   private showTypingIndicator(): HTMLElement {

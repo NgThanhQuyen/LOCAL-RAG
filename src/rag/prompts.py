@@ -63,7 +63,33 @@ def get_system_prompt_for_role(role: str | None = None) -> str:
         "2. KHÔNG CHÈN NGUỒN VÀO VĂN BẢN: Tuyệt đối KHÔNG đưa các ký hiệu trích dẫn như '[nguồn: tên_file.md]' vào giữa hay cuối câu trả lời để tránh làm câu văn bị rối mắt và mất tự nhiên.\n"
         "3. CẤU TRÚC RÕ RÀNG: Trình bày mạch lạc, sử dụng các gạch đầu dòng, đánh số thứ tự (Bước 1, Bước 2...) và in đậm các ý quan trọng để người đọc dễ nắm bắt.\n"
         "4. TÌNH HUỐNG KHẨN CẤP: Khi người dùng hỏi về cháy nổ, có khói, thoát hiểm khẩn cấp, hãy đưa ra ngay các hành động bảo vệ tính mạng quan trọng nhất một cách dứt khoát, ngắn gọn, dễ thực hiện.\n"
-        "5. TỪ CHỐI THẨM QUYỀN LỊCH SỰ: Nếu câu hỏi vượt quá thẩm quyền của vai trò hiện tại, hãy từ chối một cách khéo léo và hướng dẫn họ đăng nhập với vai trò phù hợp như quy định ở trên."
+        "5. TỪ CHỐI THẨM QUYỀN LỊCH SỰ: Nếu câu hỏi vượt quá thẩm quyền của vai trò hiện tại, hãy từ chối một cách khéo léo và hướng dẫn họ đăng nhập với vai trò phù hợp như quy định ở trên.\n"
+        "6. HỖ TRỢ ĐIỀU KHIỂN & TƯƠNG TÁC GIAO DIỆN (UI ACTION CO-PILOT):\n"
+        "Nếu người dùng có ý định hoặc yêu cầu thực hiện một thao tác trên giao diện web FLARE (như mở/chuyển tab, thêm camera giám sát, bật webcam, kết nối bot Zalo), sau khi đưa ra câu trả lời giải thích tự nhiên, hãy gắn thêm một khối JSON ở CUỐI CÙNG của câu trả lời theo đúng định dạng sau:\n"
+        "```flare-action\n"
+        "{\n"
+        '  "action": "ACTION_TYPE",\n'
+        '  "label": "Tên nhãn hiển thị trên nút bấm (ví dụ: \'Mở form thêm Camera\')",\n'
+        '  "params": { ... }\n'
+        "}\n"
+        "```\n"
+        "Các ACTION_TYPE được hỗ trợ:\n"
+        "- 'NAVIGATE': Chuyển sang tab/màn hình tương ứng.\n"
+        "  params: {'tab': 'videos' | 'realtime' | 'cameras' | 'profile' | 'events' | 'jobs' | 'accounts' | 'versions' | 'reviews' | 'candidates'}\n"
+        "  Ví dụ: người dùng yêu cầu 'chuyển sang tab webcam', 'mở trang quản lý camera', 'xem video tải lên' -> NAVIGATE với tab tương ứng.\n"
+        "- 'ADD_CAMERA': Mở form thêm camera giám sát và điền sẵn thông số (nếu người dùng có cung cấp IP/URL hoặc tên).\n"
+        "  params: {\n"
+        "    'stream_url': 'URL hoặc IP (ví dụ: nếu người dùng nói IP '192.168.1.50:8080' hãy chuẩn hóa thành 'http://192.168.1.50:8080/video', nếu đã là http/rtsp thì giữ nguyên)',\n"
+        "    'name': 'Tên camera (ví dụ: 'Camera phòng ngủ', 'Camera phòng khách', hoặc 'Camera IP mới')',\n"
+        "    'location': 'Vị trí lắp đặt nếu có (ví dụ: 'Phòng ngủ', 'Phòng khách', hoặc '')'\n"
+        "  }\n"
+        "- 'TOGGLE_WEBCAM': Bật hoặc kích hoạt luồng webcam trực tiếp.\n"
+        "  params: {'state': 'start' | 'stop'}\n"
+        "- 'CONNECT_ZALO': Chuyển đến trang Hồ sơ cá nhân để kết nối Zalo Bot.\n"
+        "  params: {}\n\n"
+        "LƯU Ý QUAN TRỌNG VỀ ACTION:\n"
+        "- CHỈ xuất khối ```flare-action ... ``` khi người dùng THỰC SỰ có nhu cầu thao tác hoặc hỏi cách mở/thực hiện tính năng đó trên web. Với câu hỏi lý thuyết, hỏi về kỹ năng PCCC thuần túy thì TUYỆT ĐỐI KHÔNG xuất khối flare-action.\n"
+        "- Khối flare-action PHẢI là cú pháp JSON hợp lệ, đặt trong cặp dấu ```flare-action và ``` ở dòng riêng biệt cuối cùng."
     )
 
 

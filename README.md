@@ -281,6 +281,25 @@ Thay vì nút tròn Floating Action Button (FAB) thông thường, widget cung c
 - **Nút Thu Gọn Thẻ Chào (Toggle Accordion):** Cho phép người dùng linh hoạt ẩn/hiện thẻ chào và bong bóng gợi ý khi cần tập trung vào giao diện chính của trang web.
 - **Avatar Phản Hồi Trực Quan:** Mascot thu nhỏ xuất hiện tự nhiên tại từng tin nhắn phản hồi của trợ lý AI bên trong hộp chat.
 
+### 6. Ra Lệnh Bằng Giọng Nói Tiếng Việt (Voice-to-Action)
+Widget tích hợp công nghệ nhận diện giọng nói trực tiếp qua **Web Speech API**:
+- **Nút Mic Thu Âm Chuyên Dụng (`flare-btn-mic`):** Nút microphone tương tác thời gian thực với hiệu ứng rung sóng âm thanh 4 cột (`flare-voice-wave`) khi đang lắng nghe.
+- **Nhận Diện Tiếng Việt (`vi-VN`):** Xử lý giọng nói tiếng Việt tự nhiên, tự động phiên âm (Realtime Speech Transcript) và điền trực tiếp vào ô nhập liệu.
+- **Tự Động Gửi Lệnh (Auto-Submit):** Ngay sau khi người dùng dứt câu (~350ms), câu hỏi/khẩu lệnh sẽ được tự động gửi đến RAG Pipeline mà không cần thao tác bấm phím.
+
+### 7. Hiệu Ứng Chữ Đánh Máy Streaming (Adaptive Typewriter Streaming Text)
+- **Streaming Chữ Mượt Mà:** Tin nhắn phản hồi của trợ lý AI được hiển thị tuần tự theo phong cách máy đánh chữ đi kèm con trỏ nhấp nháy (`flare-cursor`), tạo cảm giác tương tác tự nhiên và sống động.
+- **Tốc Độ Gõ Thích Ứng (Dynamic Speed):** Tự động tính toán tốc độ nhảy chữ dựa trên độ dài phản hồi để tối ưu thời gian chờ đợi của người dùng.
+- **Bỏ Qua Nhanh (Click-to-Skip):** Người dùng có thể click trực tiếp vào bong bóng chat để bỏ qua hiệu ứng đánh máy và xem ngay trọn vẹn toàn bộ nội dung.
+
+### 8. Điều Khiển Giao Diện Web Hai Chiều (Actionable AI Co-pilot)
+Widget hoạt động như một AI Co-pilot điều phối giao diện web thông qua sự kiện `window.dispatchEvent(new CustomEvent("flare-action", ...))`:
+- **Thêm Camera Tự Động (`ADD_CAMERA`):** Bóc tách IP/URL, vị trí phòng và tên camera từ câu lệnh (ví dụ: *"Thêm camera IP 192.168.1.50 vào phòng khách"*), tự động chuyển tab Camera, mở modal và điền sẵn dữ liệu.
+- **Bật/Tắt Webcam Trực Tiếp (`TOGGLE_WEBCAM`):** Chuyển sang màn hình webcam laptop và kích hoạt luồng camera.
+- **Điều Hướng Thông Minh (`NAVIGATE`):** Chuyển đổi giữa các tab `videos`, `realtime`, `cameras`, `profile`, `events`.
+- **Thẻ Hành Động Tương Tác (Action Card):** Tự động tạo nút bấm tương tác `⚡ Thao tác hệ thống` ngay dưới câu trả lời của trợ lý ảo để người dùng có thể click kích hoạt lại bất kỳ lúc nào.
+- **Cơ Chế Dual-Engine Fallback:** Kết hợp trích xuất intent từ Gemini LLM với bộ nhận diện regex intent phía client, cam kết không bao giờ bỏ sót yêu cầu của người dùng.
+
 ---
 
 ## 7. Tài Liệu REST API
@@ -305,14 +324,23 @@ Gửi câu hỏi và lịch sử trò chuyện để nhận câu trả lời t�
 **Response (200 OK):**
 ```json
 {
-  "answer": "Bình chữa cháy dạng bột có đồng hồ áp suất ở cổ bình, dùng dập tắt đám cháy chất rắn, lỏng, khí và điện hạ thế...",
+  "answer": "Tôi đã mở sẵn form thêm camera vào phòng khách với địa chỉ http://192.168.1.50:8080/video cho bạn!",
   "sources": [
     {
-      "source": "ky-nang-pccc-va-thoat-hiem.md",
-      "text": "Theo TCVN 3890:2023, hai loại bình chữa cháy xách tay phổ biến...",
-      "score": 0.884
+      "source": "huong-dan-nguoi-dung-flare.md",
+      "text": "Người dùng có thể kết nối camera giám sát IP hoặc biến điện thoại thành camera...",
+      "score": 0.892
     }
-  ]
+  ],
+  "action": {
+    "action": "ADD_CAMERA",
+    "label": "Mở form thêm Camera (Phòng khách)",
+    "params": {
+      "stream_url": "http://192.168.1.50:8080/video",
+      "name": "Camera Phòng khách",
+      "location": "Phòng khách"
+    }
+  }
 }
 ```
 

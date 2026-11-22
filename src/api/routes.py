@@ -52,7 +52,10 @@ def chat_query(
             SourceItem(source=s.source, text=s.text, score=s.score)
             for s in res.sources
         ]
-        return QueryResponse(answer=res.answer, sources=sources)
+        action_payload = None
+        if res.action and isinstance(res.action, dict):
+            action_payload = res.action
+        return QueryResponse(answer=res.answer, sources=sources, action=action_payload)
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

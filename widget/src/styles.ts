@@ -268,13 +268,43 @@ export const WIDGET_STYLES = `
   50% { opacity: 1; transform: translateX(-50%) scale(1.15); }
 }
 
-/* Video Mascot trong Header và Avatar tin nhắn */
+/* Avatar Mascot Video trong Header, Thẻ chào và Avatar tin nhắn (Đồng bộ chuẩn logo FLARE) */
+.flare-header-avatar,
+.flare-msg-avatar,
+.flare-bubble-avatar {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.flare-avatar-mascot-video,
 .flare-header-avatar video,
-.flare-msg-avatar video {
+.flare-msg-avatar video,
+.flare-bubble-avatar video {
   width: 100%;
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(255, 87, 34, 0.45));
+  transform: scale(1.18);
+  display: block;
+}
+
+.flare-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flare-avatar-fallback svg {
+  width: 60%;
+  height: 60%;
+  fill: currentColor;
 }
 
 /* Khung cửa sổ Chat — Mở rộng rộng rãi hơn (440px) */
@@ -338,16 +368,18 @@ export const WIDGET_STYLES = `
 }
 
 .flare-header-avatar {
+  position: relative;
   width: 38px;
   height: 38px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(255, 87, 34, 0.25), rgba(216, 67, 21, 0.45));
-  border: 1px solid rgba(255, 87, 34, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.22) 0%, rgba(139, 30, 19, 0.45) 100%);
+  border: 1px solid rgba(255, 87, 34, 0.4);
+  display: grid;
+  place-items: center;
   color: #ff5722;
-  box-shadow: 0 0 12px rgba(255, 87, 34, 0.35);
+  box-shadow: 0 0 16px rgba(255, 87, 34, 0.35);
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .flare-header-avatar svg {
@@ -463,19 +495,20 @@ export const WIDGET_STYLES = `
 }
 
 .flare-msg-avatar {
+  position: relative;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
   flex-shrink: 0;
-  font-size: 15px;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(255, 87, 34, 0.25);
 }
 
 .flare-msg.assistant .flare-msg-avatar {
-  background: linear-gradient(135deg, rgba(255, 87, 34, 0.2), rgba(216, 67, 21, 0.4));
-  border: 1px solid rgba(255, 87, 34, 0.45);
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.22) 0%, rgba(139, 30, 19, 0.45) 100%);
+  border: 1px solid rgba(255, 87, 34, 0.4);
   color: var(--flare-primary);
 }
 
@@ -542,6 +575,80 @@ export const WIDGET_STYLES = `
   font-family: monospace;
   font-size: 12.5px;
   color: #ffab91;
+}
+
+/* Thẻ hành động tương tác giao diện (Action Card & Button) */
+.flare-action-card {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 87, 34, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flare-action-badge {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #ff9e80;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.flare-action-badge svg {
+  width: 13px;
+  height: 13px;
+  fill: #ff9e80;
+}
+
+.flare-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.18) 0%, rgba(255, 87, 34, 0.32) 100%);
+  border: 1px solid rgba(255, 87, 34, 0.5);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.25);
+  text-align: left;
+  user-select: none;
+}
+
+.flare-action-btn:hover {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  border-color: #ff5722;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.45);
+}
+
+.flare-action-btn:active {
+  transform: translateY(0);
+}
+
+.flare-action-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.flare-action-btn.is-executed {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #86efac;
 }
 
 /* Các Tag Câu Hỏi Nhanh Xếp Hàng Dọc Bên Phải (Như Mẫu Easy AI) */
@@ -647,6 +754,122 @@ export const WIDGET_STYLES = `
 
 .flare-input::placeholder {
   color: #6e7681;
+}
+
+/* Nút Thu Âm / Ra Lệnh Giọng Nói (Voice-to-Action) */
+.flare-btn-mic {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.flare-btn-mic:hover {
+  background: rgba(255, 87, 34, 0.15);
+  border-color: rgba(255, 87, 34, 0.4);
+  color: var(--flare-primary);
+  transform: scale(1.05);
+}
+
+.flare-btn-mic.is-listening {
+  background: #ef4444 !important;
+  border-color: #f87171 !important;
+  color: #ffffff !important;
+  animation: mic-pulse 1.2s infinite ease-in-out;
+}
+
+@keyframes mic-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    transform: scale(1.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    transform: scale(1);
+  }
+}
+
+.flare-btn-mic svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+/* Thông báo trạng thái thu âm giọng nói */
+.flare-voice-indicator {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  font-size: 12px;
+  font-weight: 500;
+  animation: flare-fade-in 0.2s ease;
+}
+
+.flare-voice-indicator.active {
+  display: flex;
+}
+
+.flare-voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 12px;
+}
+
+.flare-voice-wave span {
+  width: 3px;
+  height: 100%;
+  background: #ef4444;
+  border-radius: 2px;
+  animation: sound-wave 0.8s infinite ease-in-out alternate;
+}
+
+.flare-voice-wave span:nth-child(2) { animation-delay: 0.2s; height: 70%; }
+.flare-voice-wave span:nth-child(3) { animation-delay: 0.4s; height: 100%; }
+.flare-voice-wave span:nth-child(4) { animation-delay: 0.1s; height: 50%; }
+
+@keyframes sound-wave {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+
+/* Con trỏ nhấp nháy cho hiệu ứng Typewriter */
+.flare-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--flare-primary);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: cursor-blink 0.75s infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes flare-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .flare-btn-send {
