@@ -265,6 +265,8 @@ class FlareChatWidgetController {
   private windowElem: HTMLElement | null = null;
   private expandBtn: HTMLButtonElement | null = null;
   private subtitleElem: HTMLElement | null = null;
+  private wrapperElem: HTMLElement | null = null;
+  private themeObserver: MutationObserver | null = null;
 
   constructor(customConfig?: WidgetConfig) {
     const detectedRole = window.FlareChatWidgetConfig?.role || customConfig?.role || "guest";
@@ -523,6 +525,8 @@ class FlareChatWidgetController {
 
     // Main Wrapper
     const wrapper = document.createElement("div");
+    wrapper.className = "flare-wrapper";
+    this.wrapperElem = wrapper;
     wrapper.innerHTML = `
       <!-- Mascot Launcher Nổi Bật Ở Góc Phải (Theo Hình Mẫu) -->
       <div class="flare-mascot-launcher" id="flare-mascot-launcher">
@@ -659,6 +663,29 @@ class FlareChatWidgetController {
 
     this.bindEvents();
     this.loadHistory();
+    this.syncTheme();
+    try {
+      this.themeObserver = new MutationObserver(() => {
+        this.syncTheme();
+      });
+      this.themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"],
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  private syncTheme() {
+    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+    if (this.container) {
+      this.container.classList.toggle("theme-light", isLight);
+      this.container.setAttribute("data-theme", isLight ? "light" : "dark");
+    }
+    if (this.wrapperElem) {
+      this.wrapperElem.classList.toggle("theme-light", isLight);
+    }
   }
 
   private renderInitialGreeting() {

@@ -18,6 +18,152 @@ export const WIDGET_STYLES = `
   box-sizing: border-box;
 }
 
+:host([data-theme="light"]),
+:host(.theme-light),
+.flare-wrapper.theme-light {
+  --flare-bg-main: #f8fafc;
+  --flare-bg-panel: #ffffff;
+  --flare-bg-card: #ffffff;
+  --flare-border: rgba(0, 0, 0, 0.08);
+  --flare-text: #0f172a;
+  --flare-text-muted: #64748b;
+  --flare-shadow: 0 16px 48px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.flare-wrapper.theme-light .flare-mascot-bubble {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 87, 34, 0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 0 16px rgba(255, 87, 34, 0.15);
+}
+
+.flare-wrapper.theme-light .flare-bubble-title {
+  color: #0f172a;
+}
+
+.flare-wrapper.theme-light .flare-bubble-text {
+  color: #334155;
+}
+
+.flare-wrapper.theme-light .flare-mascot-pill {
+  background: rgba(255, 255, 255, 0.96);
+  color: #1e293b;
+  border: 1px solid rgba(255, 87, 34, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.flare-wrapper.theme-light .flare-mascot-pill:hover {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  color: #ffffff;
+}
+
+.flare-wrapper.theme-light .flare-mascot-toggle-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 87, 34, 0.3);
+  color: #64748b;
+}
+
+.flare-wrapper.theme-light .flare-header {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.flare-wrapper.theme-light .flare-header-title {
+  color: #0f172a;
+}
+
+.flare-wrapper.theme-light .flare-btn-icon:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.flare-wrapper.theme-light .flare-messages {
+  background: #f8fafc;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.flare-wrapper.theme-light .flare-messages::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+.flare-wrapper.theme-light .flare-msg.assistant .flare-msg-bubble {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.flare-wrapper.theme-light .flare-msg-bubble strong {
+  color: #ea580c;
+}
+
+.flare-wrapper.theme-light .flare-msg-bubble code {
+  background: rgba(0, 0, 0, 0.05);
+  color: #c2410c;
+}
+
+.flare-wrapper.theme-light .flare-action-btn {
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.08) 0%, rgba(255, 87, 34, 0.18) 100%);
+  border: 1px solid rgba(255, 87, 34, 0.4);
+  color: #c2410c;
+  box-shadow: 0 2px 6px rgba(255, 87, 34, 0.1);
+}
+
+.flare-wrapper.theme-light .flare-action-btn:hover {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  color: #ffffff;
+}
+
+.flare-wrapper.theme-light .flare-suggest-pill {
+  color: #c2410c;
+  background: rgba(255, 87, 34, 0.06);
+  border: 1.5px solid rgba(255, 87, 34, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.flare-wrapper.theme-light .flare-suggest-pill:hover {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  color: #ffffff;
+  border-color: #ff5722;
+}
+
+.flare-wrapper.theme-light .flare-typing {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.flare-wrapper.theme-light .flare-footer {
+  background: #ffffff;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.flare-wrapper.theme-light .flare-input-wrapper {
+  background: #f1f5f9;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.flare-wrapper.theme-light .flare-input {
+  color: #0f172a;
+}
+
+.flare-wrapper.theme-light .flare-input::placeholder {
+  color: #94a3b8;
+}
+
+.flare-wrapper.theme-light .flare-btn-mic {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #64748b;
+}
+
+.flare-wrapper.theme-light .flare-btn-mic:hover {
+  background: rgba(255, 87, 34, 0.12);
+  color: var(--flare-primary);
+}
+
+.flare-wrapper.theme-light .flare-brand {
+  color: #94a3b8;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;

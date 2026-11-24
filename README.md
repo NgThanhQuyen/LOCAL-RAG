@@ -279,7 +279,7 @@ Thay vì nút tròn Floating Action Button (FAB) thông thường, widget cung c
 - **Thẻ Lời Chào Tự Động Thích Ứng (Floating Greeting Card):** Hiển thị tên trợ lý, chức danh và lời chào tương ứng với vai trò của người dùng.
 - **Bong Bóng Gợi Ý Nhanh (Dynamic Suggestion Pills):** Các viên thuốc gợi ý câu hỏi được xếp dọc tinh tế ngay trên đầu mascot. Khi người dùng bấm vào một gợi ý bất kỳ (ví dụ: *"📷 Cách biến điện thoại thành camera giám sát"*), widget sẽ tự động mở hộp thoại và gửi ngay câu hỏi đến RAG Pipeline.
 - **Nút Thu Gọn Thẻ Chào (Toggle Accordion):** Cho phép người dùng linh hoạt ẩn/hiện thẻ chào và bong bóng gợi ý khi cần tập trung vào giao diện chính của trang web.
-- **Avatar Phản Hồi Trực Quan:** Mascot thu nhỏ xuất hiện tự nhiên tại từng tin nhắn phản hồi của trợ lý AI bên trong hộp chat.
+- **Avatar Video Hoạt Hình Đồng Bộ Logo FLARE:** Header của hộp chat và từng tin nhắn phản hồi của trợ lý AI sử dụng video linh vật WebM nền trong suốt chuyển động liên tục lặp lại (`mascot_flare.webm`), đồng bộ 100% với phong cách Brand Icon trên thanh điều hướng website mẹ.
 
 ### 6. Ra Lệnh Bằng Giọng Nói Tiếng Việt (Voice-to-Action)
 Widget tích hợp công nghệ nhận diện giọng nói trực tiếp qua **Web Speech API**:
@@ -293,12 +293,22 @@ Widget tích hợp công nghệ nhận diện giọng nói trực tiếp qua **W
 - **Bỏ Qua Nhanh (Click-to-Skip):** Người dùng có thể click trực tiếp vào bong bóng chat để bỏ qua hiệu ứng đánh máy và xem ngay trọn vẹn toàn bộ nội dung.
 
 ### 8. Điều Khiển Giao Diện Web Hai Chiều (Actionable AI Co-pilot)
-Widget hoạt động như một AI Co-pilot điều phối giao diện web thông qua sự kiện `window.dispatchEvent(new CustomEvent("flare-action", ...))`:
-- **Thêm Camera Tự Động (`ADD_CAMERA`):** Bóc tách IP/URL, vị trí phòng và tên camera từ câu lệnh (ví dụ: *"Thêm camera IP 192.168.1.50 vào phòng khách"*), tự động chuyển tab Camera, mở modal và điền sẵn dữ liệu.
-- **Bật/Tắt Webcam Trực Tiếp (`TOGGLE_WEBCAM`):** Chuyển sang màn hình webcam laptop và kích hoạt luồng camera.
-- **Điều Hướng Thông Minh (`NAVIGATE`):** Chuyển đổi giữa các tab `videos`, `realtime`, `cameras`, `profile`, `events`.
-- **Thẻ Hành Động Tương Tác (Action Card):** Tự động tạo nút bấm tương tác `⚡ Thao tác hệ thống` ngay dưới câu trả lời của trợ lý ảo để người dùng có thể click kích hoạt lại bất kỳ lúc nào.
-- **Cơ Chế Dual-Engine Fallback:** Kết hợp trích xuất intent từ Gemini LLM với bộ nhận diện regex intent phía client, cam kết không bao giờ bỏ sót yêu cầu của người dùng.
+Widget hoạt động như một AI Co-pilot điều phối giao diện web thông qua sự kiện `window.dispatchEvent(new CustomEvent("flare-action", { detail: action, bubbles: true, composed: true }))`:
+
+| Action Code | Chức Năng | Tham Số (`params`) | Ví Dụ Câu Lệnh Người Dùng |
+| :--- | :--- | :--- | :--- |
+| `NAVIGATE` | Chuyển đổi tab/màn hình tức thời | `{"tab": "videos" \| "realtime" \| "cameras" \| "profile" \| "events"}` | *"chuyển sang tab camera"*, *"mở video đã tải lên"*, *"xem sự kiện cảnh báo"* |
+| `ADD_CAMERA` | Mở modal Thêm Camera & điền sẵn thông số | `{"stream_url": string, "name": string, "location": string}` | *"thêm camera IP 192.168.1.50 vào phòng khách"*, *"tạo camera mới IP 192.168.1.100"* |
+| `TOGGLE_WEBCAM` | Bật/tắt luồng camera laptop phân tích realtime | `{"state": "start" \| "stop", "tab": "realtime"}` | *"bật webcam trực tiếp"*, *"mở cam laptop lên"*, *"tắt webcam"* |
+| `CONNECT_ZALO` | Mở trang Hồ sơ để kết nối Zalo Bot | `{"tab": "profile"}` | *"kết nối bot zalo"*, *"hướng dẫn cài zalo nhận tin"*, *"cấu hình thông tin cá nhân"* |
+
+- **Cơ Chế Dual-Engine Fallback:** Kết hợp trích xuất intent từ Gemini LLM với bộ nhận diện regex intent phía client (`detectClientAction`), đảm bảo **100% không bao giờ bỏ sót yêu cầu** của người dùng ngay cả khi mất kết nối AI.
+- **Thẻ Hành Động Tương Tác (Action Card):** Tự động render nút bấm tương tác `⚡ Thao tác hệ thống` ngay dưới câu trả lời của trợ lý ảo để người dùng có thể click kích hoạt lại bất kỳ lúc nào nếu lỡ tay đóng form trên web.
+
+### 9. Tự Động Đồng Bộ Giao Diện Sáng / Tối (Auto Light & Dark Theme)
+Widget tích hợp cơ chế theo dõi giao diện chủ thông qua **MutationObserver**:
+- **Quan sát thời gian thực:** Tự động lắng nghe thay đổi thuộc tính `data-theme` trên thẻ `<html>` của website mẹ (`data-theme="light"` hoặc `data-theme="dark"`).
+- **Thích ứng toàn diện:** Tự động chuyển đổi toàn bộ hệ thống biến CSS (`--flare-bg-main`, `--flare-bg-panel`, `--flare-border`, `--flare-text`), màu nền bóng mờ của thẻ chào, các viên thuốc gợi ý (Suggestion Pills), khung nhập câu hỏi, thanh cuộn và nút bấm để hòa hợp hoàn hảo với giao diện Light Mode lẫn Dark Mode của ứng dụng web.
 
 ---
 
@@ -411,4 +421,5 @@ Trước khi đẩy mã nguồn lên GitHub, dự án đã được rà soát v�
 - [x] **Cô Lập Dữ Liệu Nội Bộ (Data Privacy)**: Thư mục chứa tài liệu thô `data/raw/*` và bộ nhớ đệm vector `data/processed/*` (.npz, .json) được đưa vào danh sách bỏ qua của cả `.gitignore` và `.dockerignore` (chỉ giữ file `.gitkeep` để duy trì cấu trúc thư mục).
 - [x] **Không Đẩy File Rác & Cache (Clean Working Tree)**: Toàn bộ thư mục `node_modules/`, `widget/node_modules/`, `widget/dist/`, `.pytest_cache/`, `__pycache__/` đều bị loại trừ khỏi Git commit.
 - [x] **Rà Soát Quét Tự Động (Automated Secret Scanning)**: Đã chạy script quét regex kiểm tra toàn bộ cây thư mục, đảm bảo không có bất kỳ chuỗi token, khóa cá nhân hay credentials nào bị hardcode trong mã nguồn.
+- [x] **Bảo Vệ Tài Liệu Thiết Kế Nội Bộ**: Thư mục `docs/` (chứa các tài liệu phân tích kỹ thuật kiến trúc Co-pilot) đã được loại trừ trong `.gitignore` để giữ tính riêng tư cho giải pháp và tài liệu nội bộ của nhóm phát triển.
 - [x] **Tài Sản Tĩnh Chuẩn Bị Đầy Đủ**: File video `src/api/static/mascot_flare.webm` (~1.9 MB) và bundle `src/api/static/widget.js` đã được biên dịch tối ưu sẵn sàng phục vụ nhúng widget.

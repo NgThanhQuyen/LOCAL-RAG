@@ -42,3 +42,6 @@ data/processed/*
 .DS_Store
 Thumbs.db
 
+# Thu muc tai lieu thiet ke noi bo
+docs/
+
